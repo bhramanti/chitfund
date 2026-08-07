@@ -383,6 +383,56 @@ let currentTab = "funds";
 let currentFundId = null;
 let qrBase64 = null;
 
+/* ---------------- Login/Signup स्क्रीनची भाषा (मराठी/हिंदी/English) ----------------
+   हे फक्त लॉगिन-आधीच्या स्क्रीनसाठी आहे — signup करताना निवडलेली भाषा profile मध्ये
+   preferred_language म्हणून साठवली जाते, आणि तीच पुढे सगळ्या Telegram मेसेजसाठी वापरली जाते. */
+let authLang = localStorage.getItem("cf_auth_lang") || "mr";
+function setAuthLang(l) { authLang = l; localStorage.setItem("cf_auth_lang", l); }
+const AUTH_STRINGS = {
+  mr: {
+    loginTab: "लॉगिन", signupTab: "नवीन Sign up",
+    loginDesc: "तुमच्या Telegram ID आणि PIN ने लॉगिन करा.",
+    tidLabel: "Telegram User ID", pinLabel: "PIN", loginBtn: "लॉगिन", remember: "मला लक्षात ठेवा",
+    signupDesc: "फॉर्म भरा — Admin approve केल्यावर Telegram वर सूचना मिळेल.",
+    nameLabel: "पूर्ण नाव *", phoneLabel: "मोबाईल नंबर", upiLabel: "UPI ID",
+    pinSetLabel: "PIN सेट करा (लॉगिनसाठी) *", signupBtn: "Sign up करा",
+    langLabel: "तुमची पसंतीची भाषा / Preferred language",
+    tidHelp1: "तुमचा Telegram ID मिळवायचे २ सोपे टप्पे:",
+    tidHelp2: "१. खालचं बटण दाबा → Telegram मध्ये <b>@userinfobot</b> उघडेल → तिथे <b>Start</b> दाबा.<br>२. तो पाठवेल त्यातला <b>Id: 123456789</b> हा आकडा कॉपी करून वर टाका.",
+    tidBtn: "📲 @userinfobot उघडा",
+    signupNote: "⚠️ Sign up आधी एकदा आमच्या बॉट <b>@chitfindbot</b> ला Telegram वर <b>/start</b> पाठवा — तरच सूचना येतील. UPI ID लॉगिननंतर प्रोफाईलमध्ये भरा (चिठ्ठीत भाग घ्यायला आवश्यक).",
+    pendingTitle: "⏳ प्रतीक्षेत", pendingBody: (n) => `नमस्कार ${n}, तुमचं खातं अजून Admin कडून Approve व्हायचंय. Approve झाल्यावर Telegram वर सूचना येईल.`,
+  },
+  hi: {
+    loginTab: "लॉगिन", signupTab: "नया Sign up",
+    loginDesc: "अपने Telegram ID और PIN से लॉगिन करें।",
+    tidLabel: "Telegram User ID", pinLabel: "PIN", loginBtn: "लॉगिन", remember: "मुझे याद रखें",
+    signupDesc: "फॉर्म भरें — Admin approve करने पर Telegram पर सूचना मिलेगी।",
+    nameLabel: "पूरा नाम *", phoneLabel: "मोबाइल नंबर", upiLabel: "UPI ID",
+    pinSetLabel: "PIN सेट करें (लॉगिन के लिए) *", signupBtn: "Sign up करें",
+    langLabel: "आपकी पसंदीदा भाषा / Preferred language",
+    tidHelp1: "अपना Telegram ID पाने के 2 आसान स्टेप:",
+    tidHelp2: "1. नीचे दिया बटन दबाएं → Telegram में <b>@userinfobot</b> खुलेगा → वहां <b>Start</b> दबाएं।<br>2. वह जो भेजेगा उसमें से <b>Id: 123456789</b> यह नंबर कॉपी करके ऊपर डालें।",
+    tidBtn: "📲 @userinfobot खोलें",
+    signupNote: "⚠️ Sign up से पहले एक बार हमारे बॉट <b>@chitfindbot</b> को Telegram पर <b>/start</b> भेजें — तभी सूचनाएं मिलेंगी। UPI ID लॉगिन के बाद प्रोफाइल में भरें (चिट्ठी में भाग लेने के लिए ज़रूरी)।",
+    pendingTitle: "⏳ प्रतीक्षा में", pendingBody: (n) => `नमस्ते ${n}, आपका खाता अभी Admin से Approve होना बाकी है। Approve होने पर Telegram पर सूचना आएगी।`,
+  },
+  en: {
+    loginTab: "Login", signupTab: "New Sign up",
+    loginDesc: "Log in with your Telegram ID and PIN.",
+    tidLabel: "Telegram User ID", pinLabel: "PIN", loginBtn: "Login", remember: "Remember me",
+    signupDesc: "Fill the form — you'll get a Telegram notification once Admin approves you.",
+    nameLabel: "Full name *", phoneLabel: "Mobile number", upiLabel: "UPI ID",
+    pinSetLabel: "Set a PIN (for login) *", signupBtn: "Sign up",
+    langLabel: "तुमची पसंतीची भाषा / Preferred language",
+    tidHelp1: "2 easy steps to get your Telegram ID:",
+    tidHelp2: "1. Tap the button below → <b>@userinfobot</b> opens in Telegram → tap <b>Start</b> there.<br>2. Copy the number after <b>Id: 123456789</b> from its reply and paste it above.",
+    tidBtn: "📲 Open @userinfobot",
+    signupNote: "⚠️ Before signing up, send <b>/start</b> to our bot <b>@chitfindbot</b> on Telegram once — otherwise you won't get notifications. Add your UPI ID in Profile after logging in (required to take part in the draw).",
+    pendingTitle: "⏳ Pending", pendingBody: (n) => `Hi ${n}, your account is still waiting for Admin approval. You'll get a Telegram notification once approved.`,
+  },
+};
+
 const app = document.getElementById("app");
 
 function route(view) {
@@ -396,6 +446,7 @@ function route(view) {
    AUTH SCREENS
    ============================================================ */
 function renderAuth(mode = "login") {
+  const S = AUTH_STRINGS[authLang];
   app.innerHTML = `
     <div class="center-screen">
       <div class="brand">
@@ -404,91 +455,106 @@ function renderAuth(mode = "login") {
         </div>
         <h1>चिट फंड मॅनेजर</h1>
       </div>
+      <div class="tabs" style="margin-bottom:10px;">
+        <div class="tab-toggle ${authLang==='mr'?'active':''}" id="alMr" style="font-size:11px;padding:6px;">मराठी</div>
+        <div class="tab-toggle ${authLang==='hi'?'active':''}" id="alHi" style="font-size:11px;padding:6px;">हिंदी</div>
+        <div class="tab-toggle ${authLang==='en'?'active':''}" id="alEn" style="font-size:11px;padding:6px;">English</div>
+      </div>
       <div class="tabs">
-        <div class="tab-toggle ${mode==='login'?'active':''}" id="tabLogin">लॉगिन</div>
-        <div class="tab-toggle ${mode==='signup'?'active':''}" id="tabSignup">नवीन Sign up</div>
+        <div class="tab-toggle ${mode==='login'?'active':''}" id="tabLogin">${S.loginTab}</div>
+        <div class="tab-toggle ${mode==='signup'?'active':''}" id="tabSignup">${S.signupTab}</div>
       </div>
       <div class="card" id="authCard"></div>
     </div>`;
   document.getElementById("tabLogin").onclick = () => renderAuth("login");
   document.getElementById("tabSignup").onclick = () => renderAuth("signup");
+  document.getElementById("alMr").onclick = () => { setAuthLang("mr"); renderAuth(mode); };
+  document.getElementById("alHi").onclick = () => { setAuthLang("hi"); renderAuth(mode); };
+  document.getElementById("alEn").onclick = () => { setAuthLang("en"); renderAuth(mode); };
   mode === "login" ? renderLoginForm() : renderSignupForm();
 }
 
 function renderLoginForm() {
+  const S = AUTH_STRINGS[authLang];
   const c = document.getElementById("authCard");
   const saved = JSON.parse(localStorage.getItem("cf_remember") || "null");
   c.innerHTML = `
-    <p class="desc">तुमच्या Telegram ID आणि PIN ने लॉगिन करा.</p>
+    <p class="desc">${S.loginDesc}</p>
     <div id="authMsg"></div>
-    <label>Telegram User ID</label>
-    <input type="text" id="loginTid" placeholder="उदा. 123456789" inputmode="numeric" value="${saved?.telegram_id ? String(saved.telegram_id).replace(/"/g,'&quot;') : ''}">
-    <label>PIN</label>
-    <input type="password" id="loginPin" placeholder="4-6 अंकी PIN" inputmode="numeric" value="${saved?.pin ? String(saved.pin).replace(/"/g,'&quot;') : ''}">
+    <label>${S.tidLabel}</label>
+    <input type="text" id="loginTid" placeholder="e.g. 123456789" inputmode="numeric" value="${saved?.telegram_id ? String(saved.telegram_id).replace(/"/g,'&quot;') : ''}">
+    <label>${S.pinLabel}</label>
+    <input type="password" id="loginPin" placeholder="PIN" inputmode="numeric" value="${saved?.pin ? String(saved.pin).replace(/"/g,'&quot;') : ''}">
     <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:600;color:var(--ink);cursor:pointer;">
       <input type="checkbox" id="loginRemember" ${saved ? 'checked' : ''} style="width:18px;height:18px;">
-      मला लक्षात ठेवा (या फोनवर)
+      ${S.remember}
     </label>
-    <p style="font-size:11px;color:var(--muted);margin:4px 0 0;">फक्त तुमचा स्वतःचा फोन असेल तरच वापरा — PIN या फोनमध्ये साठवला जाईल.</p>
-    <button class="btn" id="loginBtn">लॉगिन करा</button>
-    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram ID माहीत नाही? <a href="https://t.me/userinfobot" target="_blank" rel="noopener" style="color:var(--navy);font-weight:600;">@userinfobot उघडा</a> → Start दाबा → मिळालेला Id इथे टाका.</p>`;
+    <button class="btn" id="loginBtn">${S.loginBtn}</button>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram ID? <a href="https://t.me/userinfobot" target="_blank" rel="noopener" style="color:var(--navy);font-weight:600;">@userinfobot</a></p>`;
   document.getElementById("loginBtn").onclick = async () => {
     const telegram_id = document.getElementById("loginTid").value.trim();
     const pin = document.getElementById("loginPin").value.trim();
     const remember = document.getElementById("loginRemember").checked;
-    if (!telegram_id || !pin) return showAuthMsg("Telegram ID व PIN भरा", true);
+    if (!telegram_id || !pin) return showAuthMsg("Telegram ID + PIN", true);
     const btn = document.getElementById("loginBtn");
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>लॉगिन होत आहे...';
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
     try {
       const { profile } = await api("login", { telegram_id, pin });
       if (remember) localStorage.setItem("cf_remember", JSON.stringify({ telegram_id, pin }));
       else localStorage.removeItem("cf_remember");
       setSession(profile);
       route("app");
-    } catch (e) { showAuthMsg(e.message, true); btn.disabled=false; btn.textContent="लॉगिन करा"; }
+    } catch (e) { showAuthMsg(e.message, true); btn.disabled=false; btn.textContent=S.loginBtn; }
   };
 }
 
 function renderSignupForm() {
   qrBase64 = null;
+  const S = AUTH_STRINGS[authLang];
   const c = document.getElementById("authCard");
   c.innerHTML = `
-    <p class="desc">फॉर्म भरा — Admin approve केल्यावर Telegram वर सूचना मिळेल.</p>
+    <p class="desc">${S.signupDesc}</p>
     <div id="authMsg"></div>
-    <label>पूर्ण नाव *</label>
-    <input type="text" id="suName" placeholder="तुमचं नाव">
-    <label>मोबाईल नंबर</label>
+    <label>${S.nameLabel}</label>
+    <input type="text" id="suName">
+    <label>${S.phoneLabel}</label>
     <input type="tel" id="suPhone" placeholder="9876543210">
     <label>Telegram User ID *</label>
-    <input type="text" id="suTid" placeholder="फक्त आकडे — उदा. 123456789" inputmode="numeric">
+    <input type="text" id="suTid" placeholder="123456789" inputmode="numeric">
     <div style="background:var(--paper);border:1px dashed var(--line);border-radius:6px;padding:10px;margin-top:6px;">
-      <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">तुमचा Telegram ID मिळवायचे २ सोपे टप्पे:</p>
-      <p style="font-size:12px;color:var(--ink);margin:0 0 8px;">१. खालचं बटण दाबा → Telegram मध्ये <b>@userinfobot</b> उघडेल → तिथे <b>Start</b> दाबा.<br>२. तो पाठवेल त्यातला <b>Id: 123456789</b> हा आकडा कॉपी करून वर टाका.</p>
-      <a href="https://t.me/userinfobot" target="_blank" rel="noopener" class="small-btn" style="display:inline-block;text-decoration:none;">📲 @userinfobot उघडा</a>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">${S.tidHelp1}</p>
+      <p style="font-size:12px;color:var(--ink);margin:0 0 8px;">${S.tidHelp2}</p>
+      <a href="https://t.me/userinfobot" target="_blank" rel="noopener" class="small-btn" style="display:inline-block;text-decoration:none;">${S.tidBtn}</a>
     </div>
-    <label>UPI ID <span style="font-weight:400;color:var(--muted);">(नंतर प्रोफाईलमध्ये जोडता येईल)</span></label>
+    <label>${S.upiLabel} <span style="font-weight:400;color:var(--muted);"></span></label>
     <input type="text" id="suUpi" placeholder="yourname@upi" style="display:none;">
-    <label>PIN सेट करा (लॉगिनसाठी) *</label>
-    <input type="password" id="suPin" placeholder="4-6 अंकी PIN" inputmode="numeric">
-    <button class="btn maroon" id="suBtn">Sign up करा</button>
-    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">⚠️ Sign up आधी एकदा आमच्या बॉट <b>@chitfindbot</b> ला Telegram वर <b>/start</b> पाठवा — तरच सूचना येतील. UPI ID लॉगिननंतर प्रोफाईलमध्ये भरा (चिठ्ठीत भाग घ्यायला आवश्यक).</p>`;
+    <label>${S.langLabel}</label>
+    <select id="suLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
+      <option value="mr" ${authLang==='mr'?'selected':''}>मराठी</option>
+      <option value="hi" ${authLang==='hi'?'selected':''}>हिंदी</option>
+      <option value="en" ${authLang==='en'?'selected':''}>English</option>
+    </select>
+    <label>${S.pinSetLabel}</label>
+    <input type="password" id="suPin" placeholder="4-6" inputmode="numeric">
+    <button class="btn maroon" id="suBtn">${S.signupBtn}</button>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">${S.signupNote}</p>`;
   document.getElementById("suBtn").onclick = async () => {
     const name = document.getElementById("suName").value.trim();
     const phone = document.getElementById("suPhone").value.trim();
     const telegram_id = document.getElementById("suTid").value.trim();
     const pin = document.getElementById("suPin").value.trim();
-    if (!name || !telegram_id || !pin) return showAuthMsg("* असलेले सर्व फील्ड भरा", true);
+    const preferred_language = document.getElementById("suLang").value;
+    if (!name || !telegram_id || !pin) return showAuthMsg("*", true);
     const btn = document.getElementById("suBtn");
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
     try {
-      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id, pin });
-      if (isFirstAdmin) {
-        showAuthMsg("तुम्ही पहिले युजर असल्यामुळे थेट Admin म्हणून खातं तयार झालं आहे! आता लॉगिन करा.", false);
-      } else {
-        showAuthMsg("Sign up request पाठवली! Admin ने approve केल्यावर Telegram वर सूचना मिळेल.", false);
-      }
-      setTimeout(() => renderAuth("login"), 1800);
-    } catch (e) { showAuthMsg(e.message, true); btn.disabled=false; btn.textContent="Sign up करा"; }
+      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id, pin, preferred_language });
+      showAuthMsg(isFirstAdmin
+        ? "तुम्ही पहिले युजर असल्यामुळे थेट Admin म्हणून खातं तयार झालं आहे! आता लॉगिन करा. / You are the first user, so you're now Admin — please log in."
+        : "Sign up request पाठवली! Admin approve केल्यावर सूचना मिळेल. / Sign up request sent! You'll be notified once Admin approves.", false);
+      setAuthLang(preferred_language);
+      setTimeout(() => renderAuth("login"), 2200);
+    } catch (e) { showAuthMsg(e.message, true); btn.disabled=false; btn.textContent=S.signupBtn; }
   };
 }
 function showAuthMsg(msg, isError) {
@@ -496,11 +562,12 @@ function showAuthMsg(msg, isError) {
 }
 
 function renderPending() {
+  const S = AUTH_STRINGS[session?.preferred_language && AUTH_STRINGS[session.preferred_language] ? session.preferred_language : "mr"];
   app.innerHTML = `
     <div class="center-screen">
-      <div class="brand"><h1>⏳ प्रतीक्षेत</h1></div>
+      <div class="brand"><h1>${S.pendingTitle}</h1></div>
       <div class="card">
-        <p class="desc" style="margin:0;">नमस्कार ${esc(session?.name) || ''}, तुमचं खातं अजून Admin कडून Approve व्हायचंय. Approve झाल्यावर Telegram वर सूचना येईल.</p>
+        <p class="desc" style="margin:0;">${esc(S.pendingBody(session?.name || ''))}</p>
         <button class="btn secondary" id="logoutBtn2">Logout</button>
       </div>
     </div>`;
@@ -961,6 +1028,12 @@ async function renderAdminTab() {
         <input type="text" id="mmTid" placeholder="असल्यास आकडे टाका" inputmode="numeric">
         <label>PIN <span style="font-weight:400;">(ऐच्छिक — default 0000)</span></label>
         <input type="password" id="mmPin" placeholder="4-6 अंकी" inputmode="numeric">
+        <label>भाषा / Language</label>
+        <select id="mmLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
+          <option value="mr" selected>मराठी</option>
+          <option value="hi">हिंदी</option>
+          <option value="en">English</option>
+        </select>
         <button class="btn" id="mmBtn">मेंबर जोडा</button>
       </div>`;
 
@@ -1025,6 +1098,7 @@ async function renderAdminTab() {
         upi_id: document.getElementById("mmUpi").value.trim(),
         telegram_id: document.getElementById("mmTid").value.trim() || null,
         pin: document.getElementById("mmPin").value.trim() || null,
+        preferred_language: document.getElementById("mmLang").value,
       };
       mmBtn.disabled = true;
       try {
@@ -1120,6 +1194,12 @@ function openEditMember(p) {
     <label>Telegram ID</label>
     <input type="text" id="emTid" inputmode="numeric" value="${p.telegram_id != null && p.telegram_id > 0 ? p.telegram_id : ''}" placeholder="फक्त आकडे — नसेल तर रिकामा">
     <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">Telegram ID रिकामा किंवा चुकीचा असेल तर या मेंबरला बॉटवरून सूचना जाणार नाहीत.</p>
+    <label>भाषा / Language</label>
+    <select id="emLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
+      <option value="mr" ${(!p.preferred_language || p.preferred_language==='mr')?'selected':''}>मराठी</option>
+      <option value="hi" ${p.preferred_language==='hi'?'selected':''}>हिंदी</option>
+      <option value="en" ${p.preferred_language==='en'?'selected':''}>English</option>
+    </select>
     <label>Role</label>
     <div class="list-item" style="padding:8px 0;">
       <div class="who">सध्या: ${p.role === 'admin' ? '👑 Admin' : 'Member'}</div>
@@ -1151,6 +1231,7 @@ function openEditMember(p) {
       phone: document.getElementById("emPhone").value.trim(),
       upi_id: document.getElementById("emUpi").value.trim(),
       telegram_id: document.getElementById("emTid").value.trim(),
+      preferred_language: document.getElementById("emLang").value,
     };
     const pin = document.getElementById("emPin").value.trim();
     if (pin) payload.pin = pin;
@@ -1195,6 +1276,16 @@ function renderProfileTab() {
       ${session.qr_url ? `<img src="${session.qr_url}" class="qr-preview" style="display:block;margin-top:10px;">` : ''}
     </div>
     <div class="card">
+      <h2>भाषा / Language</h2>
+      <p class="desc">Telegram सूचना/मेसेज याच भाषेत जातील. / Telegram notifications will be sent in this language.</p>
+      <select id="prLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
+        <option value="mr" ${session.preferred_language==='mr'||!session.preferred_language?'selected':''}>मराठी</option>
+        <option value="hi" ${session.preferred_language==='hi'?'selected':''}>हिंदी</option>
+        <option value="en" ${session.preferred_language==='en'?'selected':''}>English</option>
+      </select>
+      <button class="btn secondary" id="prLangSave" style="margin-top:10px;">भाषा जतन करा / Save language</button>
+    </div>
+    <div class="card">
       <h2>पेमेंट माहिती अपडेट करा</h2>
       <p class="desc">तुमचं नाव निघाल्यावर बाकीचे इथल्या UPI/QR वर पैसे पाठवतील.</p>
       <label>UPI ID *</label>
@@ -1210,6 +1301,17 @@ function renderProfileTab() {
     <button class="btn secondary" id="guideBtn">📘 वापर मार्गदर्शक / User Guide</button>
     <button class="btn secondary" id="pLogout">Logout</button>`;
 
+  document.getElementById("prLangSave").onclick = async () => {
+    const preferred_language = document.getElementById("prLang").value;
+    const btn = document.getElementById("prLangSave");
+    btn.disabled = true;
+    try {
+      const { profile } = await api("updateProfile", { profile_id: session.id, preferred_language });
+      setSession(profile);
+      toast("भाषा बदलली / Language updated");
+    } catch (e) { toast(e.message); }
+    btn.disabled = false;
+  };
   let prQrBase64 = null;
   document.getElementById("prQrPick").onclick = () => document.getElementById("prQr").click();
   document.getElementById("prQr").onchange = async (e) => {

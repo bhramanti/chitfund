@@ -346,6 +346,20 @@ function fileToBase64(file) {
   });
 }
 
+/* ---------------- सुरक्षा: HTML-escape ---------------- */
+// नाव/फोन/UPI/मेसेज सारखा युजर-input डेटा innerHTML मध्ये टाकण्याआधी नेहमी escape करा —
+// नाहीतर कोणीही signup करताना नावात <script> टाकून दुसऱ्या युजरच्या (उदा. Admin च्या) browser मध्ये
+// तो कोड चालवू शकतो (stored XSS). प्रत्येक ठिकाणी DB मधून आलेला मजकूर दाखवताना esc() वापरा.
+function esc(v) {
+  if (v == null) return "";
+  return String(v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /* ---------------- UI helpers ---------------- */
 // यादीसारखी skeleton (list loading साठी)
 function skeletonList(rows = 3) {
@@ -389,7 +403,6 @@ function renderAuth(mode = "login") {
           <svg viewBox="0 0 100 90" width="64" height="58"><path d="M20 30 Q10 60 30 80 Q50 92 70 80 Q90 60 80 30 Q75 15 50 12 Q25 15 20 30 Z" fill="#C68A2E" stroke="#8C2F39" stroke-width="3"/><ellipse cx="50" cy="14" rx="16" ry="6" fill="#EEE4C9" stroke="#8C2F39" stroke-width="2"/></svg>
         </div>
         <h1>चिट फंड मॅनेजर</h1>
-        <p>Mumbai Trekizens — बचत गट व्यवस्थापन</p>
       </div>
       <div class="tabs">
         <div class="tab-toggle ${mode==='login'?'active':''}" id="tabLogin">लॉगिन</div>
@@ -487,7 +500,7 @@ function renderPending() {
     <div class="center-screen">
       <div class="brand"><h1>⏳ प्रतीक्षेत</h1></div>
       <div class="card">
-        <p class="desc" style="margin:0;">नमस्कार ${session?.name || ''}, तुमचं खातं अजून Admin कडून Approve व्हायचंय. Approve झाल्यावर Telegram वर सूचना येईल.</p>
+        <p class="desc" style="margin:0;">नमस्कार ${esc(session?.name) || ''}, तुमचं खातं अजून Admin कडून Approve व्हायचंय. Approve झाल्यावर Telegram वर सूचना येईल.</p>
         <button class="btn secondary" id="logoutBtn2">Logout</button>
       </div>
     </div>`;
@@ -505,7 +518,7 @@ function renderShell() {
       <div class="tb-user">
         <div class="avatar">${initial}</div>
         <div class="tb-meta">
-          <div class="tb-name">${firstName}</div>
+          <div class="tb-name">${esc(firstName)}</div>
           <span class="role-tag">${session.role === 'admin' ? 'ADMIN' : 'MEMBER'}</span>
         </div>
       </div>
@@ -550,9 +563,9 @@ function showWinnerModal(a, onClose) {
   ov.innerHTML = `
     <div class="modal-card">
       <div class="party">🎉</div>
-      <h2>${a.fund_name}</h2>
+      <h2>${esc(a.fund_name)}</h2>
       <p>महिना ${a.month_number} ची चिठ्ठी निघाली</p>
-      <div class="wname">${a.is_me ? 'तुमचं नाव निघालं! 🏆' : a.winner_name}</div>
+      <div class="wname">${a.is_me ? 'तुमचं नाव निघालं! 🏆' : esc(a.winner_name)}</div>
       <div class="amt-big">₹${Number(a.amount).toLocaleString('en-IN')}</div>
       <p>${a.is_me ? 'बाकी सर्वांना तुमचा UPI/QR पाठवला गेला आहे.' : 'कृपया तुमचा हप्ता विजेत्याला पाठवा.'}</p>
       <button class="btn" id="modalOk">ठीक आहे</button>
@@ -589,7 +602,7 @@ async function renderFundsTab() {
       html += `<div class="card">` + list.map(f => `
         <div class="list-item" style="cursor:pointer" data-fund="${f.id}">
           <div>
-            <div class="who">${f.name}</div>
+            <div class="who">${esc(f.name)}</div>
             <div class="meta">₹${Number(f.installment).toLocaleString('en-IN')}/महिना</div>
           </div>
           <span class="tag ${f.status}">${f.status==='active'?'चालू':'पूर्ण'}</span>
@@ -624,7 +637,7 @@ async function renderFundDetail(fundId) {
     let html = `
       <button class="link-btn" id="backBtn">‹ सर्व फंड्स</button>
       <div class="card">
-        <h2>${fund.name} <span class="tag ${fund.status}" style="margin-left:6px;">${fund.status==='active'?'चालू':'पूर्ण'}</span></h2>
+        <h2>${esc(fund.name)} <span class="tag ${fund.status}" style="margin-left:6px;">${fund.status==='active'?'चालू':'पूर्ण'}</span></h2>
         <p class="desc">₹${Number(fund.installment).toLocaleString('en-IN')} / मेंबर / महिना · Duration: ${members.length} महिने · फेऱ्या: ${rounds.length}/${members.length||0}</p>
         ${isAdmin ? `<div style="display:flex;gap:6px;margin-top:6px;">
           <button class="small-btn secondary" id="editFundBtn">✏️ फंड Edit</button>
@@ -645,7 +658,7 @@ async function renderFundDetail(fundId) {
     html += `<h3 class="section-h">मेंबर (${members.length})</h3><div class="card">`;
     html += members.length ? members.map(m => `
       <div class="list-item">
-        <div><div class="who">${m.name}${m.id===session.id?' (तुम्ही)':''}</div><div class="meta">${m.phone||''}</div></div>
+        <div><div class="who">${esc(m.name)}${m.id===session.id?' (तुम्ही)':''}</div><div class="meta">${esc(m.phone)||''}</div></div>
         <span class="tag ${wonIds.has(m.id)?'won':'wait'}">${wonIds.has(m.id)?'फंड मिळाला':'प्रतीक्षेत'}</span>
       </div>`).join('') : emptyState("👥", "अजून मेंबर नाहीत", isAdmin ? "वर 'मेंबर जोडा' मधून approved मेंबर या फंडात जोडा." : "Admin मेंबर जोडतील.");
     html += `</div>`;
@@ -658,6 +671,15 @@ async function renderFundDetail(fundId) {
             <div class="matka"><svg viewBox="0 0 100 90"><path d="M20 30 Q10 60 30 80 Q50 92 70 80 Q90 60 80 30 Q75 15 50 12 Q25 15 20 30 Z" fill="#C68A2E" stroke="#8C2F39" stroke-width="3"/><ellipse cx="50" cy="14" rx="16" ry="6" fill="#EEE4C9" stroke="#8C2F39" stroke-width="2"/></svg></div>
             <div id="drawResult"></div>
             <button class="btn maroon" id="drawBtn" ${eligible.length===0||members.length===0?'disabled':''}>चिठ्ठी काढा</button>
+            <button class="btn secondary" id="manualDrawBtn" style="margin-top:8px;" ${eligible.length===0||members.length===0?'disabled':''}>🎯 विजेता स्वतः निवडा</button>
+            <div id="manualDrawBox" style="display:none;width:100%;margin-top:10px;text-align:left;">
+              <label>Eligible मेंबरमधून विजेता निवडा</label>
+              <select id="manualDrawSelect" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
+                ${eligible.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}
+              </select>
+              <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0;">ही फेरी "Admin निवड" म्हणून सर्वांना Telegram मेसेजमध्ये स्पष्ट दिसेल — random draw सारखी लपवलेली नाही.</p>
+              <button class="btn maroon" id="manualDrawConfirmBtn" style="margin-top:8px;">या मेंबरला विजेता ठरवा</button>
+            </div>
             ${eligible.length===0 && members.length>0 ? '<p style="font-size:12px;color:var(--muted);">सर्व मेंबरना फंड मिळाला — फंड पूर्ण झाला</p>' : ''}
             ${rounds.length>0 ? `<button class="btn secondary" id="undoDrawBtn" style="margin-top:8px;">↩️ शेवटची चिठ्ठी रद्द करा (महिना ${lastRound.month_number})</button>` : ''}
           </div>
@@ -668,32 +690,37 @@ async function renderFundDetail(fundId) {
       const roundPayments = payments.filter(p => p.round_id === lastRound.id);
       const winner = members.find(m => m.id === lastRound.winner_profile_id);
       const paidCount = roundPayments.filter(p => p.paid).length;
-      html += `<h3 class="section-h">महिना ${lastRound.month_number} — वसुली (${paidCount}/${members.length})</h3><div class="card">`;
+      html += `<h3 class="section-h">महिना ${lastRound.month_number}${lastRound.is_manual ? ' <span class="tag wait" style="font-size:9.5px;">Admin निवड</span>' : ''} — वसुली (${paidCount}/${members.length})</h3><div class="card">`;
       html += members.map(m => {
         const p = roundPayments.find(x => x.profile_id === m.id);
         const paid = p ? p.paid : false;
+        const overdue = p ? !!p.overdue : false;
         const canToggle = isAdmin || m.id === session.id;
         return `<div class="list-item">
-          <div><div class="who">${m.name}${m.id===lastRound.winner_profile_id?' 🏆':''}</div><div class="meta amt">₹${Number(fund.installment).toLocaleString('en-IN')}</div></div>
+          <div><div class="who">${esc(m.name)}${m.id===lastRound.winner_profile_id?' 🏆':''}</div><div class="meta amt">₹${Number(fund.installment).toLocaleString('en-IN')}</div></div>
+          ${overdue ? `<span class="tag unpaid" style="margin-right:4px;">थकीत ⚠️</span>` : ''}
           ${canToggle ? `<span class="tag ${paid?'paid':'unpaid'}" style="cursor:pointer" data-toggle-pay="${m.id}" data-round="${lastRound.id}" data-paid="${paid}">${paid?'भरला ✓':'बाकी — टॅप करा'}</span>`
             : `<span class="tag ${paid?'paid':'unpaid'}">${paid?'भरला ✓':'बाकी'}</span>`}
         </div>`;
       }).join('');
       if (isAdmin && paidCount < members.length) {
-        html += `<div style="display:flex;gap:8px;margin-top:12px;">
-          <button class="btn maroon" id="remindBtn" style="margin-top:0;">⏰ बाकी असलेल्यांना रिमाइंडर</button>
-          <button class="btn secondary" id="resendBtn" style="margin-top:0;">🔁 QR पुन्हा पाठवा</button>
+        html += `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn maroon" id="remindBtn" style="margin-top:0;flex:1;">⏰ बाकी असलेल्यांना रिमाइंडर</button>
+          <button class="btn secondary" id="resendBtn" style="margin-top:0;flex:1;">🔁 QR पुन्हा पाठवा</button>
         </div>`;
+      }
+      if (isAdmin) {
+        html += `<button class="btn secondary" id="shareLedgerBtn" style="margin-top:8px;">📒 हिशोब Telegram वर शेअर करा</button>`;
       }
       html += `</div>`;
       if (winner && winner.id !== session.id) {
         html += `
           <div class="card">
             <h2>💳 विजेत्याला पैसे पाठवा</h2>
-            <p class="desc">विजेता: <b>${winner.name}</b> — रक्कम ₹${Number(fund.installment).toLocaleString('en-IN')}</p>
+            <p class="desc">विजेता: <b>${esc(winner.name)}</b> — रक्कम ₹${Number(fund.installment).toLocaleString('en-IN')}</p>
             <div class="qr-share-box">
               ${winner.qr_url ? `<img src="${winner.qr_url}">` : ''}
-              <div style="font-size:13px;"><b>UPI ID:</b><br>${winner.upi_id || 'दिलेला नाही'}</div>
+              <div style="font-size:13px;"><b>UPI ID:</b><br>${esc(winner.upi_id) || 'दिलेला नाही'}</div>
             </div>
           </div>`;
       }
@@ -704,7 +731,7 @@ async function renderFundDetail(fundId) {
       const w = members.find(m => m.id === r.winner_profile_id);
       const rp = payments.filter(p => p.round_id === r.id && p.paid).length;
       return `<div class="list-item">
-        <div><div class="who">महिना ${r.month_number} — ${w?w.name:'—'}</div><div class="meta">वसूल ${rp}/${members.length}</div></div>
+        <div><div class="who">महिना ${r.month_number} — ${w?esc(w.name):'—'}${r.is_manual ? ' <span class="tag wait" style="font-size:9px;">Admin निवड</span>' : ''}</div><div class="meta">वसूल ${rp}/${members.length}</div></div>
         <span class="amt">₹${Number(r.amount).toLocaleString('en-IN')}</span>
       </div>`;
     }).join('') : emptyState("🎟", "अजून चिठ्ठी निघालेली नाही", isAdmin ? "मेंबर जोडून 'चिठ्ठी काढा' दाबा." : "पहिली चिठ्ठी निघाली की इथे नोंद दिसेल.");
@@ -723,11 +750,15 @@ async function renderFundDetail(fundId) {
         const memberIds = new Set(members.map(m => m.id));
         const avail = allProfiles.filter(p => !memberIds.has(p.id));
         const sel = document.getElementById("addMemberSelect");
-        sel.innerHTML = avail.length ? avail.map(p => `<option value="${p.id}">${p.name}</option>`).join('') : `<option value="">कोणी उपलब्ध नाही</option>`;
+        sel.innerHTML = avail.length ? avail.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('') : `<option value="">कोणी उपलब्ध नाही</option>`;
         document.getElementById("addMemberBtn").onclick = async () => {
           const target_id = sel.value;
           if (!target_id) return toast("कोणी निवडलेलं नाही");
-          try { await api("addMemberToFund", { profile_id: session.id, fund_id: fundId, target_id }); toast("मेंबर जोडला"); renderFundDetail(fundId); }
+          try {
+            const { catchUpRounds } = await api("addMemberToFund", { profile_id: session.id, fund_id: fundId, target_id });
+            toast(catchUpRounds > 0 ? `मेंबर जोडला — मागील ${catchUpRounds} हप्ते catch-up म्हणून बाकी नोंदवले` : "मेंबर जोडला");
+            renderFundDetail(fundId);
+          }
           catch (e) { toast(e.message); }
         };
       } catch (e) {}
@@ -741,10 +772,29 @@ async function renderFundDetail(fundId) {
         try {
           await new Promise(r => setTimeout(r, 1300));
           const { winner } = await api("drawWinner", { profile_id: session.id, fund_id: fundId });
-          stage.innerHTML = `<div class="winner-stamp">🎉 ${winner.name}</div>`;
+          stage.innerHTML = `<div class="winner-stamp">🎉 ${esc(winner.name)}</div>`;
           toast(`चिठ्ठी निघाली: ${winner.name} — सर्वांना Telegram वर सूचना गेली`);
           setTimeout(() => renderFundDetail(fundId), 1600);
         } catch (e) { toast(e.message); drawBtn.disabled = false; stage.innerHTML=''; }
+      };
+
+      const manualDrawBtn = document.getElementById("manualDrawBtn");
+      const manualDrawBox = document.getElementById("manualDrawBox");
+      if (manualDrawBtn) manualDrawBtn.onclick = () => {
+        manualDrawBox.style.display = manualDrawBox.style.display === "none" ? "block" : "none";
+      };
+      const manualDrawConfirmBtn = document.getElementById("manualDrawConfirmBtn");
+      if (manualDrawConfirmBtn) manualDrawConfirmBtn.onclick = async () => {
+        const target_id = document.getElementById("manualDrawSelect").value;
+        if (!target_id) return toast("मेंबर निवडा");
+        const pick = eligible.find(m => m.id === target_id);
+        if (!confirm(`"${pick?.name}" ला या महिन्याचा विजेता ठरवायचं? सर्वांना Telegram वर "Admin निवड" असं स्पष्ट कळेल.`)) return;
+        manualDrawConfirmBtn.disabled = true;
+        try {
+          const { winner } = await api("drawWinnerManual", { profile_id: session.id, fund_id: fundId, target_id });
+          toast(`"${winner.name}" ला विजेता ठरवलं — सर्वांना Telegram वर सूचना गेली`);
+          renderFundDetail(fundId);
+        } catch (e) { toast(e.message); manualDrawConfirmBtn.disabled = false; }
       };
 
       const undoBtn = document.getElementById("undoDrawBtn");
@@ -774,7 +824,10 @@ async function renderFundDetail(fundId) {
     const remindBtn = document.getElementById("remindBtn");
     if (remindBtn && lastRound) remindBtn.onclick = async () => {
       remindBtn.disabled = true; remindBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
-      try { const { sent } = await api("remindUnpaid", { profile_id: session.id, round_id: lastRound.id }); toast(`${sent} जणांना रिमाइंडर गेला`); }
+      try {
+        const { sent, failed } = await api("remindUnpaid", { profile_id: session.id, round_id: lastRound.id });
+        toast(failed && failed.length ? `${sent} जणांना गेला, ${failed.length} जणांना गेला नाही (${failed.join(', ')})` : `${sent} जणांना रिमाइंडर गेला`);
+      }
       catch (e) { toast(e.message); }
       remindBtn.disabled = false; remindBtn.innerHTML = '⏰ बाकी असलेल्यांना रिमाइंडर';
     };
@@ -784,6 +837,17 @@ async function renderFundDetail(fundId) {
       try { const { sent } = await api("resendWinnerInfo", { profile_id: session.id, round_id: lastRound.id }); toast(`${sent} जणांना QR/UPI पुन्हा गेला`); }
       catch (e) { toast(e.message); }
       resendBtn.disabled = false; resendBtn.innerHTML = '🔁 QR पुन्हा पाठवा';
+    };
+    const shareLedgerBtn = document.getElementById("shareLedgerBtn");
+    if (shareLedgerBtn && lastRound) shareLedgerBtn.onclick = async () => {
+      if (!confirm(`महिना ${lastRound.month_number} चा हिशोब सर्व फंड-मेंबरना Telegram वर पाठवायचा?`)) return;
+      shareLedgerBtn.disabled = true; shareLedgerBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      try {
+        const { sent, failed } = await api("shareLedger", { profile_id: session.id, round_id: lastRound.id });
+        toast(failed && failed.length ? `${sent} जणांना गेला, ${failed.length} जणांना गेला नाही` : `${sent} जणांना हिशोब गेला`);
+      }
+      catch (e) { toast(e.message); }
+      shareLedgerBtn.disabled = false; shareLedgerBtn.innerHTML = '📒 हिशोब Telegram वर शेअर करा';
     };
 
     const completeBtn = document.getElementById("completeFundBtn");
@@ -870,6 +934,7 @@ async function renderAdminTab() {
         <p class="desc">सर्व approved मेंबरना एकत्र Telegram मेसेज.</p>
         <input type="text" id="bcText" placeholder="उदा. या रविवारी चिठ्ठी काढणार आहोत">
         <button class="btn" id="bcBtn">पाठवा</button>
+        <div id="bcResult" style="margin-top:8px;"></div>
       </div>
       <div class="card">
         <h2>📥 डेटा Export</h2>
@@ -895,7 +960,7 @@ async function renderAdminTab() {
     html += `<h3 class="section-h">Pending Sign-up Requests (${pending.length})</h3><div class="card">`;
     html += pending.length ? pending.map(p => `
       <div class="list-item">
-        <div><div class="who">${p.name}</div><div class="meta">📞 ${p.phone||'-'} · TG: ${p.telegram_id}</div></div>
+        <div><div class="who">${esc(p.name)}</div><div class="meta">📞 ${esc(p.phone)||'-'} · TG: ${esc(p.telegram_id)}</div></div>
         <div style="display:flex;gap:6px;">
           <button class="small-btn" data-approve="${p.id}">Approve</button>
           <button class="small-btn maroon" data-reject="${p.id}">नकार</button>
@@ -906,7 +971,7 @@ async function renderAdminTab() {
     html += `<h3 class="section-h">सर्व Approved मेंबर (${approved.length})</h3><div class="card">`;
     html += approved.map(p => `
       <div class="list-item">
-        <div><div class="who">${p.name} ${p.role==='admin'?'👑':''}</div><div class="meta">📞 ${p.phone||'-'} · UPI: ${p.upi_id||'-'}</div></div>
+        <div><div class="who">${esc(p.name)} ${p.role==='admin'?'👑':''}</div><div class="meta">📞 ${esc(p.phone)||'-'} · UPI: ${esc(p.upi_id)||'-'}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
           <button class="small-btn secondary" data-role="${p.id}" data-newrole="${p.role==='admin'?'member':'admin'}">${p.role==='admin'?'Admin काढा':'Admin बनवा'}</button>
           <button class="small-btn secondary" data-edit="${p.id}">Edit</button>
@@ -983,7 +1048,16 @@ async function renderAdminTab() {
       if (!text) return toast("मेसेज लिहा");
       if (!confirm("सर्व मेंबरना हा मेसेज पाठवायचा?")) return;
       bcBtn.disabled = true; bcBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
-      try { const { sent } = await api("broadcast", { profile_id: session.id, text }); toast(`${sent} जणांना मेसेज गेला`); document.getElementById("bcText").value=""; }
+      const bcResult = document.getElementById("bcResult");
+      bcResult.innerHTML = "";
+      try {
+        const { sent, failed } = await api("broadcast", { profile_id: session.id, text });
+        toast(`${sent} जणांना मेसेज गेला`);
+        document.getElementById("bcText").value = "";
+        if (failed && failed.length) {
+          bcResult.innerHTML = `<div class="error-box">${failed.length} जणांना गेला नाही:<br>${failed.map(f => esc(f)).join('<br>')}</div>`;
+        }
+      }
       catch (e) { toast(e.message); }
       bcBtn.disabled = false; bcBtn.textContent = "पाठवा";
     };
@@ -1004,7 +1078,7 @@ function openEditMember(p) {
   const box = document.createElement("div");
   box.className = "card";
   box.innerHTML = `
-    <h2>मेंबर संपादन — ${p.name}</h2>
+    <h2>मेंबर संपादन — ${esc(p.name)}</h2>
     <p class="desc">बदल करून "जतन करा" दाबा. PIN रिकामा ठेवला तर बदलणार नाही.</p>
     <label>पूर्ण नाव</label>
     <input type="text" id="emName" value="${(p.name||'').replace(/"/g,'&quot;')}">
@@ -1012,6 +1086,9 @@ function openEditMember(p) {
     <input type="tel" id="emPhone" value="${(p.phone||'').replace(/"/g,'&quot;')}">
     <label>UPI ID</label>
     <input type="text" id="emUpi" value="${(p.upi_id||'').replace(/"/g,'&quot;')}">
+    <label>Telegram ID</label>
+    <input type="text" id="emTid" inputmode="numeric" value="${p.telegram_id != null && p.telegram_id > 0 ? p.telegram_id : ''}" placeholder="फक्त आकडे — नसेल तर रिकामा">
+    <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">Telegram ID रिकामा किंवा चुकीचा असेल तर या मेंबरला बॉटवरून सूचना जाणार नाहीत.</p>
     <label>नवीन PIN (फक्त बदलायचा असेल तर)</label>
     <input type="password" id="emPin" placeholder="रिकामा = बदलू नका" inputmode="numeric">
     <button class="btn" id="emSave">जतन करा</button>
@@ -1026,6 +1103,7 @@ function openEditMember(p) {
       name: document.getElementById("emName").value.trim(),
       phone: document.getElementById("emPhone").value.trim(),
       upi_id: document.getElementById("emUpi").value.trim(),
+      telegram_id: document.getElementById("emTid").value.trim(),
     };
     const pin = document.getElementById("emPin").value.trim();
     if (pin) payload.pin = pin;
@@ -1062,11 +1140,11 @@ function renderProfileTab() {
   main.innerHTML = `
     ${!hasUpi ? `<div class="error-box">⚠️ तुमचा UPI ID भरलेला नाही. चिठ्ठीत भाग घेण्यासाठी तो आवश्यक आहे — खाली भरा.</div>` : ''}
     <div class="card">
-      <h2>${session.name}</h2>
+      <h2>${esc(session.name)}</h2>
       <p class="desc">${session.role === 'admin' ? '👑 Admin' : 'Member'}</p>
-      <div class="list-item"><div class="who">फोन</div><div class="meta">${session.phone||'-'}</div></div>
-      <div class="list-item"><div class="who">Telegram ID</div><div class="meta">${session.telegram_id}</div></div>
-      <div class="list-item"><div class="who">UPI ID</div><div class="meta">${session.upi_id||'-'}</div></div>
+      <div class="list-item"><div class="who">फोन</div><div class="meta">${esc(session.phone)||'-'}</div></div>
+      <div class="list-item"><div class="who">Telegram ID</div><div class="meta">${esc(session.telegram_id)}</div></div>
+      <div class="list-item"><div class="who">UPI ID</div><div class="meta">${esc(session.upi_id)||'-'}</div></div>
       ${session.qr_url ? `<img src="${session.qr_url}" class="qr-preview" style="display:block;margin-top:10px;">` : ''}
     </div>
     <div class="card">

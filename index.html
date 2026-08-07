@@ -929,6 +929,10 @@ async function renderAdminTab() {
         <h2>📊 एकत्रित आढावा</h2>
         <p class="desc">लोड होत आहे...</p>
       </div>
+      <div class="card" id="overdueCard">
+        <h2>⚠️ थकीत हप्ते — सर्व फंड एकत्र</h2>
+        <p class="desc">लोड होत आहे...</p>
+      </div>
       <div class="card">
         <h2>📢 सर्वांना मेसेज पाठवा</h2>
         <p class="desc">सर्व approved मेंबरना एकत्र Telegram मेसेज.</p>
@@ -1042,6 +1046,30 @@ async function renderAdminTab() {
       } catch (e) {}
     })();
 
+    // थकीत हप्त्यांची एकत्रित यादी (सर्व फंड मिळून) — कोणाकडून पैसे घ्यायचे ते एका जागी दिसेल
+    (async () => {
+      try {
+        const { list } = await api("overdueList", { profile_id: session.id });
+        const oc = document.getElementById("overdueCard");
+        if (!oc) return;
+        if (!list.length) {
+          oc.innerHTML = `<h2>⚠️ थकीत हप्ते — सर्व फंड एकत्र</h2><p class="desc" style="margin:0;">सध्या कोणीही थकीत नाही 🎉</p>`;
+          return;
+        }
+        oc.innerHTML = `<h2>⚠️ थकीत हप्ते — सर्व फंड एकत्र (${list.length})</h2>` + list.map(o => `
+          <div class="list-item" style="cursor:pointer" data-overdue-fund="${o.fund_id}">
+            <div>
+              <div class="who">${esc(o.member_name)}${o.phone ? ' · 📞 ' + esc(o.phone) : ''}</div>
+              <div class="meta">${esc(o.fund_name)} — महिना ${o.month_number} · देय ${esc(o.due_date)} पासून ${o.days_overdue} दिवस थकीत</div>
+            </div>
+            <span class="amt" style="color:var(--maroon);">₹${Number(o.amount).toLocaleString('en-IN')}</span>
+          </div>`).join('');
+        oc.querySelectorAll("[data-overdue-fund]").forEach(el => el.onclick = () => {
+          currentFundId = el.dataset.overdueFund; currentTab = "funds"; renderShell();
+        });
+      } catch (e) {}
+    })();
+
     const bcBtn = document.getElementById("bcBtn");
     if (bcBtn) bcBtn.onclick = async () => {
       const text = document.getElementById("bcText").value.trim();
@@ -1089,6 +1117,11 @@ function openEditMember(p) {
     <label>Telegram ID</label>
     <input type="text" id="emTid" inputmode="numeric" value="${p.telegram_id != null && p.telegram_id > 0 ? p.telegram_id : ''}" placeholder="फक्त आकडे — नसेल तर रिकामा">
     <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">Telegram ID रिकामा किंवा चुकीचा असेल तर या मेंबरला बॉटवरून सूचना जाणार नाहीत.</p>
+    <label>Role</label>
+    <div class="list-item" style="padding:8px 0;">
+      <div class="who">सध्या: ${p.role === 'admin' ? '👑 Admin' : 'Member'}</div>
+      <button class="small-btn secondary" id="emRoleBtn">${p.role === 'admin' ? 'Admin काढा' : 'Admin बनवा'}</button>
+    </div>
     <label>नवीन PIN (फक्त बदलायचा असेल तर)</label>
     <input type="password" id="emPin" placeholder="रिकामा = बदलू नका" inputmode="numeric">
     <button class="btn" id="emSave">जतन करा</button>
@@ -1096,6 +1129,17 @@ function openEditMember(p) {
   main.prepend(box);
   window.scrollTo(0, 0);
   document.getElementById("emCancel").onclick = () => box.remove();
+  document.getElementById("emRoleBtn").onclick = async () => {
+    const newRole = p.role === 'admin' ? 'member' : 'admin';
+    const msg = newRole === 'admin' ? `"${p.name}" ला Admin बनवायचं?` : `"${p.name}" चे Admin अधिकार काढायचे?`;
+    if (!confirm(msg)) return;
+    try {
+      await api("setRole", { profile_id: session.id, target_id: p.id, role: newRole });
+      toast("झालं — Telegram वर सूचना गेली");
+      box.remove();
+      renderAdminTab();
+    } catch (e) { toast(e.message); }
+  };
   document.getElementById("emSave").onclick = async () => {
     const payload = {
       profile_id: session.id,

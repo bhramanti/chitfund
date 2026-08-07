@@ -43,8 +43,12 @@
     position:sticky; top:0; z-index:10;
   }
   header.topbar h1{font-family:var(--font-display);font-size:19px;margin:0;font-weight:700;}
-  header.topbar .role-tag{font-size:10.5px; background:var(--gold); color:#3a2a08; padding:2px 8px; border-radius:10px; font-weight:700;}
+  header.topbar .role-tag{font-size:9.5px; background:var(--gold); color:#3a2a08; padding:1px 7px; border-radius:9px; font-weight:700; letter-spacing:.3px;}
   header.topbar button{background:none;border:1px solid rgba(245,239,222,.4);color:var(--paper);font-size:12px;padding:5px 10px;border-radius:14px;}
+  header.topbar .tb-user{display:flex;align-items:center;gap:10px;}
+  header.topbar .avatar{width:38px;height:38px;border-radius:50%;background:var(--gold);color:#3a2a08;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:18px;flex-shrink:0;}
+  header.topbar .tb-meta{display:flex;flex-direction:column;gap:2px;}
+  header.topbar .tb-name{font-family:var(--font-display);font-size:16px;font-weight:700;line-height:1;}
 
   main{flex:1; padding:16px 16px 90px; overflow-y:auto;}
 
@@ -109,6 +113,8 @@
 
   .center-screen{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 0px);padding:26px 22px;}
   .brand{text-align:center;margin-bottom:18px;}
+  .brand-logo{display:flex;justify-content:center;margin-bottom:6px;}
+  .brand-logo svg{filter:drop-shadow(0 3px 6px rgba(140,47,57,.2));}
   .brand h1{font-family:var(--font-display);color:var(--navy);font-size:26px;margin:0;}
   .brand p{color:var(--muted);font-size:12.5px;margin:4px 0 0;}
 
@@ -134,6 +140,45 @@
   .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg);}}
   h3.section-h{font-family:var(--font-display);font-size:15px;color:var(--navy);margin:18px 0 8px;}
+
+  /* ---- App-सारखा अनुभव: transitions, skeletons, polish ---- */
+  @media (prefers-reduced-motion: no-preference){
+    main{animation:fadeUp .28s ease;}
+    .card{animation:fadeUp .32s ease both;}
+    #mainArea > .card:nth-child(2){animation-delay:.04s;}
+    #mainArea > .card:nth-child(3){animation-delay:.08s;}
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  button.btn,.small-btn,.tab-toggle,nav.bottomnav button{transition:transform .12s ease, background .18s ease, color .18s ease, box-shadow .18s ease;}
+  button.btn:active,.small-btn:active{transform:scale(.97);}
+  button.btn:not(:disabled):hover{box-shadow:0 3px 10px rgba(31,42,68,.18);}
+  .list-item[data-fund],.list-item[data-tab]{transition:background .15s ease;}
+  .list-item[data-fund]:active{background:rgba(31,42,68,.05);}
+
+  /* Skeleton shimmer */
+  .sk{background:linear-gradient(100deg,var(--paper-deep) 30%,#e6dcc0 50%,var(--paper-deep) 70%);background-size:200% 100%;animation:sheen 1.2s ease-in-out infinite;border-radius:6px;}
+  @keyframes sheen{from{background-position:200% 0;}to{background-position:-200% 0;}}
+  .sk-line{height:13px;margin:8px 0;}
+  .sk-line.w60{width:60%;} .sk-line.w40{width:40%;} .sk-line.w80{width:80%;}
+  .sk-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);}
+  .sk-row:last-child{border-bottom:none;}
+  .sk-pill{width:64px;height:22px;border-radius:11px;}
+  .sk-title{height:20px;width:55%;margin-bottom:10px;}
+
+  /* Empty state — कृतीचं आवाहन */
+  .empty2{text-align:center;padding:30px 18px;border:1px dashed var(--line);border-radius:10px;background:var(--paper);}
+  .empty2 .e-ic{font-size:34px;display:block;margin-bottom:8px;opacity:.8;}
+  .empty2 .e-title{font-family:var(--font-display);font-size:16px;color:var(--navy);margin-bottom:4px;}
+  .empty2 .e-sub{font-size:12.5px;color:var(--muted);line-height:1.4;}
+
+  /* Bottom nav active indicator */
+  nav.bottomnav button{position:relative;}
+  nav.bottomnav button.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:3px;background:var(--gold);border-radius:0 0 3px 3px;}
+
+  /* Section header — छोटी accent रेष */
+  h3.section-h{display:flex;align-items:center;gap:8px;}
+  h3.section-h::after{content:"";flex:1;height:1px;background:var(--line);}
 
   .modal-overlay{position:fixed;inset:0;background:rgba(35,31,24,.6);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px;}
   .modal-card{background:var(--paper);border-radius:12px;padding:26px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);border:2px solid var(--gold);}
@@ -301,6 +346,24 @@ function fileToBase64(file) {
   });
 }
 
+/* ---------------- UI helpers ---------------- */
+// यादीसारखी skeleton (list loading साठी)
+function skeletonList(rows = 3) {
+  let s = `<div class="card"><div class="sk sk-title"></div>`;
+  for (let i = 0; i < rows; i++) {
+    s += `<div class="sk-row"><div style="flex:1;"><div class="sk sk-line w60"></div><div class="sk sk-line w40"></div></div><div class="sk sk-pill"></div></div>`;
+  }
+  return s + `</div>`;
+}
+// फॉर्म/कार्डसारखी skeleton
+function skeletonCard() {
+  return `<div class="card"><div class="sk sk-title"></div><div class="sk sk-line w80"></div><div class="sk sk-line w60"></div><div class="sk sk-line w40"></div></div>`;
+}
+// रिकाम्या यादीसाठी कृती-आवाहन
+function emptyState(icon, title, sub) {
+  return `<div class="empty2"><span class="e-ic">${icon}</span><div class="e-title">${title}</div><div class="e-sub">${sub}</div></div>`;
+}
+
 /* ---------------- app state ---------------- */
 let currentTab = "funds";
 let currentFundId = null;
@@ -322,6 +385,9 @@ function renderAuth(mode = "login") {
   app.innerHTML = `
     <div class="center-screen">
       <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 100 90" width="64" height="58"><path d="M20 30 Q10 60 30 80 Q50 92 70 80 Q90 60 80 30 Q75 15 50 12 Q25 15 20 30 Z" fill="#C68A2E" stroke="#8C2F39" stroke-width="3"/><ellipse cx="50" cy="14" rx="16" ry="6" fill="#EEE4C9" stroke="#8C2F39" stroke-width="2"/></svg>
+        </div>
         <h1>चिट फंड मॅनेजर</h1>
         <p>Mumbai Trekizens — बचत गट व्यवस्थापन</p>
       </div>
@@ -432,10 +498,18 @@ function renderPending() {
    MAIN APP SHELL
    ============================================================ */
 function renderShell() {
+  const firstName = (session.name || '').trim().split(/\s+/)[0] || '';
+  const initial = firstName ? firstName[0] : '👤';
   app.innerHTML = `
     <header class="topbar">
-      <h1>चिट फंड <span class="role-tag">${session.role === 'admin' ? 'ADMIN' : 'MEMBER'}</span></h1>
-      <button id="logoutBtn">Logout</button>
+      <div class="tb-user">
+        <div class="avatar">${initial}</div>
+        <div class="tb-meta">
+          <div class="tb-name">${firstName}</div>
+          <span class="role-tag">${session.role === 'admin' ? 'ADMIN' : 'MEMBER'}</span>
+        </div>
+      </div>
+      <button id="logoutBtn">बाहेर पडा</button>
     </header>
     <main id="mainArea"></main>
     <nav class="bottomnav">
@@ -492,7 +566,7 @@ function showWinnerModal(a, onClose) {
 /* ---------------- FUNDS TAB ---------------- */
 async function renderFundsTab() {
   const main = document.getElementById("mainArea");
-  main.innerHTML = `<div class="card"><p>लोड होत आहे...</p></div>`;
+  main.innerHTML = (session.role === "admin" ? skeletonCard() : "") + skeletonList(3);
   try {
     const { list } = await api("listFunds", { profile_id: session.id });
     let html = "";
@@ -508,7 +582,9 @@ async function renderFundsTab() {
         </div>`;
     }
     html += `<h3 class="section-h">तुमचे फंड्स</h3>`;
-    if (!list.length) html += `<div class="empty">अजून कोणताही फंड नाही.</div>`;
+    if (!list.length) html += session.role === "admin"
+      ? emptyState("📒", "अजून एकही फंड नाही", "वर दिलेल्या फॉर्ममधून पहिला चिट फंड तयार करा.")
+      : emptyState("📒", "अजून एकही फंड नाही", "Admin ने फंड तयार करून तुम्हाला जोडलं की तो इथे दिसेल.");
     else {
       html += `<div class="card">` + list.map(f => `
         <div class="list-item" style="cursor:pointer" data-fund="${f.id}">
@@ -536,7 +612,7 @@ async function renderFundsTab() {
 /* ---------------- FUND DETAIL ---------------- */
 async function renderFundDetail(fundId) {
   const main = document.getElementById("mainArea");
-  main.innerHTML = `<div class="card"><p>लोड होत आहे...</p></div>`;
+  main.innerHTML = skeletonCard() + skeletonList(4);
   try {
     const { fund, members, rounds, payments } = await api("getFund", { profile_id: session.id, fund_id: fundId });
     const isAdmin = session.role === "admin";
@@ -571,7 +647,7 @@ async function renderFundDetail(fundId) {
       <div class="list-item">
         <div><div class="who">${m.name}${m.id===session.id?' (तुम्ही)':''}</div><div class="meta">${m.phone||''}</div></div>
         <span class="tag ${wonIds.has(m.id)?'won':'wait'}">${wonIds.has(m.id)?'फंड मिळाला':'प्रतीक्षेत'}</span>
-      </div>`).join('') : `<div class="empty">अजून मेंबर जोडलेले नाहीत.</div>`;
+      </div>`).join('') : emptyState("👥", "अजून मेंबर नाहीत", isAdmin ? "वर 'मेंबर जोडा' मधून approved मेंबर या फंडात जोडा." : "Admin मेंबर जोडतील.");
     html += `</div>`;
 
     if (isAdmin && fund.status === 'active') {
@@ -631,7 +707,7 @@ async function renderFundDetail(fundId) {
         <div><div class="who">महिना ${r.month_number} — ${w?w.name:'—'}</div><div class="meta">वसूल ${rp}/${members.length}</div></div>
         <span class="amt">₹${Number(r.amount).toLocaleString('en-IN')}</span>
       </div>`;
-    }).join('') : `<div class="empty">अजून चिठ्ठी निघालेली नाही.</div>`;
+    }).join('') : emptyState("🎟", "अजून चिठ्ठी निघालेली नाही", isAdmin ? "मेंबर जोडून 'चिठ्ठी काढा' दाबा." : "पहिली चिठ्ठी निघाली की इथे नोंद दिसेल.");
     html += `</div>`;
 
     if (isAdmin && fund.status === 'active' && eligible.length === 0 && members.length>0) {
@@ -778,7 +854,7 @@ function openShareLink(url) {
 /* ---------------- ADMIN TAB ---------------- */
 async function renderAdminTab() {
   const main = document.getElementById("mainArea");
-  main.innerHTML = `<div class="card"><p>लोड होत आहे...</p></div>`;
+  main.innerHTML = skeletonCard() + skeletonList(3);
   try {
     const [{ list: pending }, { list: approved }] = await Promise.all([
       api("listPending", { profile_id: session.id }),
@@ -824,7 +900,7 @@ async function renderAdminTab() {
           <button class="small-btn" data-approve="${p.id}">Approve</button>
           <button class="small-btn maroon" data-reject="${p.id}">नकार</button>
         </div>
-      </div>`).join('') : `<div class="empty">कोणतीही pending request नाही.</div>`;
+      </div>`).join('') : emptyState("✅", "कोणतीही request बाकी नाही", "नवीन signup आल्यावर तो इथे approve साठी दिसेल.");
     html += `</div>`;
 
     html += `<h3 class="section-h">सर्व Approved मेंबर (${approved.length})</h3><div class="card">`;

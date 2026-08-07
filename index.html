@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>चिट फंड मॅनेजर</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Noto+Serif+Devanagari:wght@700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5EFDE; --paper-deep:#EEE4C9; --line:#D8C79E;
+    --ink:#231F18; --navy:#1F2A44; --maroon:#8C2F39; --gold:#C68A2E; --green:#2F5233; --muted:#726A56;
+    --font-display:'Fraunces','Noto Serif Devanagari',serif;
+    --font-body:'Inter','Noto Sans Devanagari',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+    --max-w:480px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:#DCD0AA;}
+  body{
+    font-family:var(--font-body); color:var(--ink); min-height:100vh;
+    display:flex; justify-content:center;
+  }
+  #app{
+    width:100%; max-width:var(--max-w); min-height:100vh; background:var(--paper);
+    display:flex; flex-direction:column; position:relative;
+    box-shadow:0 0 30px rgba(0,0,0,.15);
+  }
+  .desktop-hint{
+    display:none; position:fixed; top:10px; left:50%; transform:translateX(-50%);
+    background:var(--navy); color:var(--paper); font-size:12px; padding:6px 14px; border-radius:20px; z-index:99;
+  }
+  @media (min-width:560px){ .desktop-hint{display:block;} }
+
+  header.topbar{
+    background:var(--navy); color:var(--paper); padding:16px 18px;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    position:sticky; top:0; z-index:10;
+  }
+  header.topbar h1{font-family:var(--font-display);font-size:19px;margin:0;font-weight:700;}
+  header.topbar .role-tag{font-size:10.5px; background:var(--gold); color:#3a2a08; padding:2px 8px; border-radius:10px; font-weight:700;}
+  header.topbar button{background:none;border:1px solid rgba(245,239,222,.4);color:var(--paper);font-size:12px;padding:5px 10px;border-radius:14px;}
+
+  main{flex:1; padding:16px 16px 90px; overflow-y:auto;}
+
+  .card{background:var(--paper-deep);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:14px;position:relative;}
+  .card::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;background:var(--maroon);opacity:.5;border-radius:2px;}
+  .card h2{font-family:var(--font-display);font-size:17px;margin:0 0 6px;color:var(--navy);}
+  .card p.desc{color:var(--muted);font-size:12.5px;margin:0 0 12px;}
+
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px;}
+  input[type=text],input[type=number],input[type=tel],input[type=password]{
+    width:100%;font-size:16px;padding:11px 12px;border:1px solid var(--line);background:var(--paper);border-radius:6px;color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--navy);}
+  .file-btn{display:block;width:100%;text-align:center;padding:11px;border:1px dashed var(--line);border-radius:6px;font-size:13px;color:var(--muted);cursor:pointer;background:var(--paper);}
+  .qr-preview{width:70px;height:70px;object-fit:cover;border-radius:6px;border:1px solid var(--line);margin-top:8px;}
+
+  button.btn{
+    width:100%;font-family:var(--font-body);font-weight:700;font-size:15px;padding:13px;border-radius:8px;
+    border:1px solid var(--navy);background:var(--navy);color:var(--paper);cursor:pointer;margin-top:14px;
+  }
+  button.btn.secondary{background:transparent;color:var(--navy);}
+  button.btn.maroon{background:var(--maroon);border-color:var(--maroon);}
+  button.btn.green{background:var(--green);border-color:var(--green);}
+  button.btn:disabled{opacity:.45;}
+  button.link-btn{background:none;border:none;color:var(--navy);font-size:13px;font-weight:600;text-decoration:underline;padding:6px 0;}
+  .small-btn{font-size:12px;padding:6px 12px;border-radius:14px;border:1px solid var(--navy);background:var(--navy);color:var(--paper);font-weight:600;}
+  .small-btn.secondary{background:transparent;color:var(--navy);}
+  .small-btn.maroon{background:var(--maroon);border-color:var(--maroon);}
+
+  .tabs{display:flex;justify-content:center;gap:6px;margin-bottom:6px;}
+  .tab-toggle{flex:1;text-align:center;padding:9px;border-radius:8px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border:1px solid var(--line);}
+  .tab-toggle.active{background:var(--navy);color:var(--paper);border-color:var(--navy);}
+
+  .list-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);gap:10px;}
+  .list-item:last-child{border-bottom:none;}
+  .list-item .who{font-size:14px;font-weight:600;}
+  .list-item .meta{font-size:11.5px;color:var(--muted);}
+  .amt{font-family:var(--font-mono);}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;}
+  .tag.won{background:rgba(198,138,46,.25);color:#7a5518;}
+  .tag.wait{background:rgba(31,42,68,.1);color:var(--navy);}
+  .tag.paid{background:rgba(47,82,51,.2);color:var(--green);}
+  .tag.unpaid{background:rgba(140,47,57,.16);color:var(--maroon);}
+  .tag.active{background:rgba(47,82,51,.2);color:var(--green);}
+  .tag.completed{background:rgba(31,42,68,.1);color:var(--navy);}
+
+  .empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:6px;}
+  .error-box{background:rgba(140,47,57,.1);border:1px solid var(--maroon);color:var(--maroon);font-size:13px;padding:9px 12px;border-radius:6px;margin-bottom:10px;}
+  .ok-box{background:rgba(47,82,51,.1);border:1px solid var(--green);color:var(--green);font-size:13px;padding:9px 12px;border-radius:6px;margin-bottom:10px;}
+
+  nav.bottomnav{
+    position:sticky; bottom:0; background:var(--navy); display:flex; z-index:10;
+    box-shadow:0 -2px 10px rgba(0,0,0,.15);
+  }
+  nav.bottomnav button{
+    flex:1;background:none;border:none;color:rgba(245,239,222,.55);font-size:11px;font-weight:600;
+    padding:11px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  }
+  nav.bottomnav button .ic{font-size:18px;}
+  nav.bottomnav button.active{color:var(--paper);}
+  nav.bottomnav button.active .ic{color:var(--gold);}
+
+  .center-screen{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 0px);padding:26px 22px;}
+  .brand{text-align:center;margin-bottom:18px;}
+  .brand h1{font-family:var(--font-display);color:var(--navy);font-size:26px;margin:0;}
+  .brand p{color:var(--muted);font-size:12.5px;margin:4px 0 0;}
+
+  .draw-stage{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 0;}
+  .matka svg{width:90px;height:82px;}
+  .chits{position:relative;width:180px;height:52px;}
+  .chit{position:absolute;width:26px;height:38px;background:var(--paper);border:1px solid var(--ink);border-radius:2px;left:50%;top:0;box-shadow:0 2px 3px rgba(0,0,0,.15);}
+  .chit.shuffling{animation:shuffle 1.3s ease-in-out infinite;}
+  @keyframes shuffle{0%{transform:translateX(-50%) rotate(-6deg);}25%{transform:translateX(-68%) translateY(-6px) rotate(8deg);}50%{transform:translateX(-30%) translateY(2px) rotate(-10deg);}75%{transform:translateX(-60%) translateY(-4px) rotate(5deg);}100%{transform:translateX(-50%) rotate(-6deg);}}
+  .winner-stamp{font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--maroon);border:3px solid var(--maroon);padding:8px 18px;border-radius:8px;transform:rotate(-3deg) scale(0);opacity:0;animation:stampIn .4s cubic-bezier(.2,1.4,.4,1) forwards;text-align:center;}
+  @keyframes stampIn{to{transform:rotate(-3deg) scale(1);opacity:1;}}
+
+  .qr-share-box{display:flex;gap:12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:10px;margin-top:10px;}
+  .qr-share-box img{width:56px;height:56px;border-radius:4px;object-fit:cover;border:1px solid var(--line);}
+
+  .share-link-box{background:var(--paper);border:1px dashed var(--line);border-radius:6px;padding:12px;text-align:center;margin-top:10px;}
+  .share-link-box img{width:130px;height:130px;margin:8px auto;display:block;}
+  .share-link-box code{display:block;font-size:11px;word-break:break-all;color:var(--muted);margin-bottom:8px;}
+
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--navy);color:var(--paper);
+    padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90%;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  h3.section-h{font-family:var(--font-display);font-size:15px;color:var(--navy);margin:18px 0 8px;}
+</style>
+</head>
+<body>
+<div class="desktop-hint">📱 हे अ‍ॅप मोबाईलसाठी डिझाइन केलेलं आहे — मोबाईलवर उघडा किंवा ब्राउझर विंडो अरुंद करा</div>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG — इथे तुमच्या Supabase प्रोजेक्टचे values भरा
+   ============================================================ */
+const CONFIG = {
+  SUPABASE_URL: "https://efyjrerkhawxwbknhvmb.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmeWpyZXJraGF3eHdia25odm1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwODc3NTYsImV4cCI6MjEwMTY2Mzc1Nn0.faW1yjE1vypfhTGfRF64hOkfbUhEbSYPweT3-uMdw2Q",
+  BOT_USERNAME: "chitfindbot", // BotFather कडून मिळालेलं युजरनेम (@ शिवाय)
+};
+const FN_URL = CONFIG.SUPABASE_URL.replace(/\/$/, "") + "/functions/v1/api";
+
+/* ---------------- API helper ---------------- */
+async function api(action, payload = {}) {
+  const res = await fetch(FN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: CONFIG.SUPABASE_ANON_KEY,
+      Authorization: "Bearer " + CONFIG.SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ action, payload }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "काहीतरी चुकलं");
+  return data;
+}
+
+/* ---------------- session ---------------- */
+let session = JSON.parse(localStorage.getItem("cf_session") || "null");
+function setSession(profile) {
+  session = profile;
+  localStorage.setItem("cf_session", JSON.stringify(profile));
+}
+function logout() {
+  session = null;
+  localStorage.removeItem("cf_session");
+  route("auth");
+}
+
+/* ---------------- toast ---------------- */
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove("show"), 2400);
+}
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ---------------- app state ---------------- */
+let currentTab = "funds";
+let currentFundId = null;
+let qrBase64 = null;
+
+const app = document.getElementById("app");
+
+function route(view) {
+  if (!session && view !== "auth") view = "auth";
+  if (session && session.status !== "approved") { renderPending(); return; }
+  if (view === "auth") renderAuth();
+  else renderShell();
+}
+
+/* ============================================================
+   AUTH SCREENS
+   ============================================================ */
+function renderAuth(mode = "login") {
+  app.innerHTML = `
+    <div class="center-screen">
+      <div class="brand">
+        <h1>चिट फंड मॅनेजर</h1>
+        <p>Mumbai Trekizens — बचत गट व्यवस्थापन</p>
+      </div>
+      <div class="tabs">
+        <div class="tab-toggle ${mode==='login'?'active':''}" id="tabLogin">लॉगिन</div>
+        <div class="tab-toggle ${mode==='signup'?'active':''}" id="tabSignup">नवीन Sign up</div>
+      </div>
+      <div class="card" id="authCard"></div>
+    </div>`;
+  document.getElementById("tabLogin").onclick = () => renderAuth("login");
+  document.getElementById("tabSignup").onclick = () => renderAuth("signup");
+  mode === "login" ? renderLoginForm() : renderSignupForm();
+}
+
+function renderLoginForm() {
+  const c = document.getElementById("authCard");
+  c.innerHTML = `
+    <p class="desc">तुमच्या Telegram ID आणि PIN ने लॉगिन करा.</p>
+    <div id="authMsg"></div>
+    <label>Telegram User ID</label>
+    <input type="text" id="loginTid" placeholder="उदा. 123456789" inputmode="numeric">
+    <label>PIN</label>
+    <input type="password" id="loginPin" placeholder="4-6 अंकी PIN" inputmode="numeric">
+    <button class="btn" id="loginBtn">लॉगिन करा</button>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram ID माहीत नाही? Telegram मध्ये <b>@userinfobot</b> ला मेसेज पाठवा — तो लगेच तुमचा ID सांगेल.</p>`;
+  document.getElementById("loginBtn").onclick = async () => {
+    const telegram_id = document.getElementById("loginTid").value.trim();
+    const pin = document.getElementById("loginPin").value.trim();
+    if (!telegram_id || !pin) return showAuthMsg("Telegram ID व PIN भरा", true);
+    const btn = document.getElementById("loginBtn");
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>लॉगिन होत आहे...';
+    try {
+      const { profile } = await api("login", { telegram_id, pin });
+      setSession(profile);
+      route("app");
+    } catch (e) { showAuthMsg(e.message, true); btn.disabled=false; btn.textContent="लॉगिन करा"; }
+  };
+}
+
+function renderSignupForm() {
+  qrBase64 = null;
+  const c = document.getElementById("authCard");
+  c.innerHTML = `
+    <p class="desc">फॉर्म भरा — Admin approve केल्यावर Telegram वर सूचना मिळेल.</p>
+    <div id="authMsg"></div>
+    <label>पूर्ण नाव *</label>
+    <input type="text" id="suName" placeholder="तुमचं नाव">
+    <label>मोबाईल नंबर</label>
+    <input type="tel" id="suPhone" placeholder="9876543210">
+    <label>Telegram User ID *</label>
+    <input type="text" id="suTid" placeholder="@userinfobot कडून मिळवा" inputmode="numeric">
+    <label>UPI ID</label>
+    <input type="text" id="suUpi" placeholder="yourname@upi">
+    <label>UPI QR कोड <span style="font-weight:400;">(ऐच्छिक)</span></label>
+    <div class="file-btn" id="qrPickBtn">फाईल निवडा 📎</div>
+    <input type="file" id="suQr" accept="image/*" style="display:none;">
+    <img id="qrPrev" class="qr-preview" style="display:none;">
+    <label>PIN सेट करा (लॉगिनसाठी) *</label>
+    <input type="password" id="suPin" placeholder="4-6 अंकी PIN" inputmode="numeric">
+    <button class="btn maroon" id="suBtn">Sign up करा</button>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram मध्ये <b>@userinfobot</b> ला मेसेज पाठवून तुमचा नंबरी User ID कॉपी करा.</p>`;
+  document.getElementById("qrPickBtn").onclick = () => document.getElementById("suQr").click();
+  document.getElementById("suQr").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    qrBase64 = await fileToBase64(f);
+    const img = document.getElementById("qrPrev");
+    img.src = qrBase64; img.style.display = "block";
+  };
+  document.getElementById("suBtn").onclick = async () => {
+    const name = document.getElementById("suName").value.trim();
+    const phone = document.getElementById("suPhone").value.trim();
+    const telegram_id = document.getElementById("suTid").value.trim();
+    const upi_id = document.getElementById("suUpi").value.trim();
+    const pin = document.getElementById("suPin").value.trim();
+    if (!name || !telegram_id || !pin) return showAuthMsg("* असलेले सर्व फील्ड भरा", true);
+    const btn = document.getElementById("suBtn");
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+    try {
+      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id, upi_id, pin, qr_base64: qrBase64 });
+      if (isFirstAdmin) {
+        showAuthMsg("तुम्ही पहिले युजर असल्यामुळे थेट Admin म्हणून खातं तयार झालं आहे! आता लॉगिन करा.", false);
+      } else {
+        showAuthMsg("Sign up request पाठवली! Admin ने approve केल्यावर Telegram वर सूचना मिळेल.", false);
+      }
+      setTimeout(() => renderAuth("login"), 1800);
+    } catch (e) { showAuthMsg(e.message, true); btn.disabled=false; btn.textContent="Sign up करा"; }
+  };
+}
+function showAuthMsg(msg, isError) {
+  document.getElementById("authMsg").innerHTML = `<div class="${isError?'error-box':'ok-box'}">${msg}</div>`;
+}
+
+function renderPending() {
+  app.innerHTML = `
+    <div class="center-screen">
+      <div class="brand"><h1>⏳ प्रतीक्षेत</h1></div>
+      <div class="card">
+        <p class="desc" style="margin:0;">नमस्कार ${session?.name || ''}, तुमचं खातं अजून Admin कडून Approve व्हायचंय. Approve झाल्यावर Telegram वर सूचना येईल.</p>
+        <button class="btn secondary" id="logoutBtn2">Logout</button>
+      </div>
+    </div>`;
+  document.getElementById("logoutBtn2").onclick = logout;
+}
+
+/* ============================================================
+   MAIN APP SHELL
+   ============================================================ */
+function renderShell() {
+  app.innerHTML = `
+    <header class="topbar">
+      <h1>चिट फंड <span class="role-tag">${session.role === 'admin' ? 'ADMIN' : 'MEMBER'}</span></h1>
+      <button id="logoutBtn">Logout</button>
+    </header>
+    <main id="mainArea"></main>
+    <nav class="bottomnav">
+      <button data-tab="funds" class="${currentTab==='funds'?'active':''}"><span class="ic">📒</span>फंड्स</button>
+      ${session.role==='admin' ? `<button data-tab="admin" class="${currentTab==='admin'?'active':''}"><span class="ic">🛡</span>Admin</button>` : ''}
+      <button data-tab="profile" class="${currentTab==='profile'?'active':''}"><span class="ic">👤</span>प्रोफाईल</button>
+    </nav>`;
+  document.getElementById("logoutBtn").onclick = logout;
+  document.querySelectorAll(".bottomnav button").forEach(b => b.onclick = () => { currentTab = b.dataset.tab; currentFundId=null; renderShell(); });
+  if (currentFundId) renderFundDetail(currentFundId);
+  else if (currentTab === "funds") renderFundsTab();
+  else if (currentTab === "admin") renderAdminTab();
+  else if (currentTab === "profile") renderProfileTab();
+}
+
+/* ---------------- FUNDS TAB ---------------- */
+async function renderFundsTab() {
+  const main = document.getElementById("mainArea");
+  main.innerHTML = `<div class="card"><p>लोड होत आहे...</p></div>`;
+  try {
+    const { list } = await api("listFunds", { profile_id: session.id });
+    let html = "";
+    if (session.role === "admin") {
+      html += `
+        <div class="card">
+          <h2>+ नवीन चिट फंड</h2>
+          <label>फंडचं नाव</label>
+          <input type="text" id="nfName" placeholder="उदा. Trekizens Bachat Gat 2026">
+          <label>मासिक हप्ता (₹ प्रत्येक मेंबरचा)</label>
+          <input type="number" id="nfInst" placeholder="5000">
+          <button class="btn" id="nfBtn">फंड तयार करा</button>
+        </div>`;
+    }
+    html += `<h3 class="section-h">तुमचे फंड्स</h3>`;
+    if (!list.length) html += `<div class="empty">अजून कोणताही फंड नाही.</div>`;
+    else {
+      html += `<div class="card">` + list.map(f => `
+        <div class="list-item" style="cursor:pointer" data-fund="${f.id}">
+          <div>
+            <div class="who">${f.name}</div>
+            <div class="meta">₹${Number(f.installment).toLocaleString('en-IN')}/महिना</div>
+          </div>
+          <span class="tag ${f.status}">${f.status==='active'?'चालू':'पूर्ण'}</span>
+        </div>`).join('') + `</div>`;
+    }
+    main.innerHTML = html;
+    if (session.role === "admin") {
+      document.getElementById("nfBtn").onclick = async () => {
+        const name = document.getElementById("nfName").value.trim();
+        const installment = parseFloat(document.getElementById("nfInst").value);
+        if (!name || !installment) return toast("नाव व हप्ता भरा");
+        try { await api("createFund", { profile_id: session.id, name, installment }); toast("फंड तयार झाला"); renderFundsTab(); }
+        catch (e) { toast(e.message); }
+      };
+    }
+    main.querySelectorAll("[data-fund]").forEach(el => el.onclick = () => { currentFundId = el.dataset.fund; renderFundDetail(currentFundId); });
+  } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
+}
+
+/* ---------------- FUND DETAIL ---------------- */
+async function renderFundDetail(fundId) {
+  const main = document.getElementById("mainArea");
+  main.innerHTML = `<div class="card"><p>लोड होत आहे...</p></div>`;
+  try {
+    const { fund, members, rounds, payments } = await api("getFund", { profile_id: session.id, fund_id: fundId });
+    const isAdmin = session.role === "admin";
+    const wonIds = new Set(rounds.map(r => r.winner_profile_id));
+    const eligible = members.filter(m => !wonIds.has(m.id));
+    const lastRound = rounds[rounds.length - 1];
+    const appUrl = location.href.split('#')[0].split('?')[0];
+
+    let html = `
+      <button class="link-btn" id="backBtn">‹ सर्व फंड्स</button>
+      <div class="card">
+        <h2>${fund.name} <span class="tag ${fund.status}" style="margin-left:6px;">${fund.status==='active'?'चालू':'पूर्ण'}</span></h2>
+        <p class="desc">₹${Number(fund.installment).toLocaleString('en-IN')} / मेंबर / महिना · Duration: ${members.length} महिने · फेऱ्या: ${rounds.length}/${members.length||0}</p>
+      </div>`;
+
+    if (isAdmin && fund.status === 'active') {
+      html += `
+        <div class="card">
+          <h2>मेंबर जोडा</h2>
+          <select id="addMemberSelect" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);"></select>
+          <button class="btn secondary" id="addMemberBtn">फंडमध्ये जोडा</button>
+          <button class="btn secondary" id="shareLinkBtn" style="margin-top:8px;">🔗 Sign-up लिंक शेअर करा</button>
+        </div>`;
+    }
+
+    html += `<h3 class="section-h">मेंबर (${members.length})</h3><div class="card">`;
+    html += members.length ? members.map(m => `
+      <div class="list-item">
+        <div><div class="who">${m.name}${m.id===session.id?' (तुम्ही)':''}</div><div class="meta">${m.phone||''}</div></div>
+        <span class="tag ${wonIds.has(m.id)?'won':'wait'}">${wonIds.has(m.id)?'फंड मिळाला':'प्रतीक्षेत'}</span>
+      </div>`).join('') : `<div class="empty">अजून मेंबर जोडलेले नाहीत.</div>`;
+    html += `</div>`;
+
+    if (isAdmin && fund.status === 'active') {
+      html += `
+        <div class="card">
+          <h2>🎟 या महिन्याची चिठ्ठी</h2>
+          <div class="draw-stage" id="drawStage">
+            <div class="matka"><svg viewBox="0 0 100 90"><path d="M20 30 Q10 60 30 80 Q50 92 70 80 Q90 60 80 30 Q75 15 50 12 Q25 15 20 30 Z" fill="#C68A2E" stroke="#8C2F39" stroke-width="3"/><ellipse cx="50" cy="14" rx="16" ry="6" fill="#EEE4C9" stroke="#8C2F39" stroke-width="2"/></svg></div>
+            <div id="drawResult"></div>
+            <button class="btn maroon" id="drawBtn" ${eligible.length===0||members.length===0?'disabled':''}>चिठ्ठी काढा</button>
+            ${eligible.length===0 && members.length>0 ? '<p style="font-size:12px;color:var(--muted);">सर्व मेंबरना फंड मिळाला — फंड पूर्ण झाला</p>' : ''}
+          </div>
+        </div>`;
+    }
+
+    if (lastRound) {
+      const roundPayments = payments.filter(p => p.round_id === lastRound.id);
+      const winner = members.find(m => m.id === lastRound.winner_profile_id);
+      const paidCount = roundPayments.filter(p => p.paid).length;
+      html += `<h3 class="section-h">महिना ${lastRound.month_number} — वसुली (${paidCount}/${members.length})</h3><div class="card">`;
+      html += members.map(m => {
+        const p = roundPayments.find(x => x.profile_id === m.id);
+        const paid = p ? p.paid : false;
+        const canToggle = isAdmin || m.id === session.id;
+        return `<div class="list-item">
+          <div><div class="who">${m.name}${m.id===lastRound.winner_profile_id?' 🏆':''}</div><div class="meta amt">₹${Number(fund.installment).toLocaleString('en-IN')}</div></div>
+          ${canToggle ? `<span class="tag ${paid?'paid':'unpaid'}" style="cursor:pointer" data-toggle-pay="${m.id}" data-round="${lastRound.id}" data-paid="${paid}">${paid?'भरला ✓':'बाकी — टॅप करा'}</span>`
+            : `<span class="tag ${paid?'paid':'unpaid'}">${paid?'भरला ✓':'बाकी'}</span>`}
+        </div>`;
+      }).join('');
+      if (isAdmin && paidCount < members.length) {
+        html += `<div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn maroon" id="remindBtn" style="margin-top:0;">⏰ बाकी असलेल्यांना रिमाइंडर</button>
+          <button class="btn secondary" id="resendBtn" style="margin-top:0;">🔁 QR पुन्हा पाठवा</button>
+        </div>`;
+      }
+      html += `</div>`;
+      if (winner && winner.id !== session.id) {
+        html += `
+          <div class="card">
+            <h2>💳 विजेत्याला पैसे पाठवा</h2>
+            <p class="desc">विजेता: <b>${winner.name}</b> — रक्कम ₹${Number(fund.installment).toLocaleString('en-IN')}</p>
+            <div class="qr-share-box">
+              ${winner.qr_url ? `<img src="${winner.qr_url}">` : ''}
+              <div style="font-size:13px;"><b>UPI ID:</b><br>${winner.upi_id || 'दिलेला नाही'}</div>
+            </div>
+          </div>`;
+      }
+    }
+
+    html += `<h3 class="section-h">विजेत्यांची नोंद</h3><div class="card">`;
+    html += rounds.length ? rounds.map(r => {
+      const w = members.find(m => m.id === r.winner_profile_id);
+      const rp = payments.filter(p => p.round_id === r.id && p.paid).length;
+      return `<div class="list-item">
+        <div><div class="who">महिना ${r.month_number} — ${w?w.name:'—'}</div><div class="meta">वसूल ${rp}/${members.length}</div></div>
+        <span class="amt">₹${Number(r.amount).toLocaleString('en-IN')}</span>
+      </div>`;
+    }).join('') : `<div class="empty">अजून चिठ्ठी निघालेली नाही.</div>`;
+    html += `</div>`;
+
+    if (isAdmin && fund.status === 'active' && eligible.length === 0 && members.length>0) {
+      html += `<button class="btn secondary" id="completeFundBtn">✅ फंड पूर्ण म्हणून बंद करा</button>`;
+    }
+
+    main.innerHTML = html;
+    document.getElementById("backBtn").onclick = () => { currentFundId = null; renderShell(); };
+
+    if (isAdmin && fund.status === 'active') {
+      try {
+        const { list: allProfiles } = await api("listProfiles", { profile_id: session.id });
+        const memberIds = new Set(members.map(m => m.id));
+        const avail = allProfiles.filter(p => !memberIds.has(p.id));
+        const sel = document.getElementById("addMemberSelect");
+        sel.innerHTML = avail.length ? avail.map(p => `<option value="${p.id}">${p.name}</option>`).join('') : `<option value="">कोणी उपलब्ध नाही</option>`;
+        document.getElementById("addMemberBtn").onclick = async () => {
+          const target_id = sel.value;
+          if (!target_id) return toast("कोणी निवडलेलं नाही");
+          try { await api("addMemberToFund", { profile_id: session.id, fund_id: fundId, target_id }); toast("मेंबर जोडला"); renderFundDetail(fundId); }
+          catch (e) { toast(e.message); }
+        };
+      } catch (e) {}
+      document.getElementById("shareLinkBtn").onclick = () => openShareLink(appUrl + "?signup");
+
+      const drawBtn = document.getElementById("drawBtn");
+      if (drawBtn) drawBtn.onclick = async () => {
+        drawBtn.disabled = true;
+        const stage = document.getElementById("drawResult");
+        stage.innerHTML = `<div class="chits">${[0,1,2,3,4].map(i=>`<div class="chit shuffling" style="animation-delay:${i*.08}s"></div>`).join('')}</div>`;
+        try {
+          await new Promise(r => setTimeout(r, 1300));
+          const { winner } = await api("drawWinner", { profile_id: session.id, fund_id: fundId });
+          stage.innerHTML = `<div class="winner-stamp">🎉 ${winner.name}</div>`;
+          toast(`चिठ्ठी निघाली: ${winner.name} — सर्वांना Telegram वर सूचना गेली`);
+          setTimeout(() => renderFundDetail(fundId), 1600);
+        } catch (e) { toast(e.message); drawBtn.disabled = false; stage.innerHTML=''; }
+      };
+    }
+
+    main.querySelectorAll("[data-toggle-pay]").forEach(el => {
+      el.onclick = async () => {
+        const target_profile_id = el.dataset.togglePay;
+        const round_id = el.dataset.round;
+        const paid = el.dataset.paid !== "true";
+        try { await api("markPayment", { profile_id: session.id, round_id, target_profile_id, paid }); renderFundDetail(fundId); }
+        catch (e) { toast(e.message); }
+      };
+    });
+
+    const remindBtn = document.getElementById("remindBtn");
+    if (remindBtn && lastRound) remindBtn.onclick = async () => {
+      remindBtn.disabled = true; remindBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      try { const { sent } = await api("remindUnpaid", { profile_id: session.id, round_id: lastRound.id }); toast(`${sent} जणांना रिमाइंडर गेला`); }
+      catch (e) { toast(e.message); }
+      remindBtn.disabled = false; remindBtn.innerHTML = '⏰ बाकी असलेल्यांना रिमाइंडर';
+    };
+    const resendBtn = document.getElementById("resendBtn");
+    if (resendBtn && lastRound) resendBtn.onclick = async () => {
+      resendBtn.disabled = true; resendBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      try { const { sent } = await api("resendWinnerInfo", { profile_id: session.id, round_id: lastRound.id }); toast(`${sent} जणांना QR/UPI पुन्हा गेला`); }
+      catch (e) { toast(e.message); }
+      resendBtn.disabled = false; resendBtn.innerHTML = '🔁 QR पुन्हा पाठवा';
+    };
+
+    const completeBtn = document.getElementById("completeFundBtn");
+    if (completeBtn) completeBtn.onclick = async () => {
+      if (!confirm("हा फंड पूर्ण झाला म्हणून बंद करायचा?")) return;
+      await api("completeFund", { profile_id: session.id, fund_id: fundId });
+      toast("फंड पूर्ण झाला — नवीन फंड सुरू करू शकता");
+      currentFundId = null; renderShell();
+    };
+  } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
+}
+
+function openShareLink(url) {
+  const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`;
+  const main = document.getElementById("mainArea");
+  const box = document.createElement("div");
+  box.className = "card";
+  box.innerHTML = `
+    <h2>Sign-up लिंक शेअर करा</h2>
+    <div class="share-link-box">
+      <img src="${qrImg}">
+      <code>${url}</code>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="small-btn" id="copyLinkBtn">लिंक कॉपी करा</button>
+        <button class="small-btn maroon" id="shareNativeBtn">📤 शेअर करा</button>
+      </div>
+    </div>`;
+  main.prepend(box);
+  document.getElementById("copyLinkBtn").onclick = () => { navigator.clipboard.writeText(url); toast("लिंक कॉपी झाली"); };
+  document.getElementById("shareNativeBtn").onclick = async () => {
+    const text = `चिट फंड मॅनेजरमध्ये Sign up करा:\n${url}`;
+    if (navigator.share) { try { await navigator.share({ title: "चिट फंड — Sign up", text, url }); } catch(e){} }
+    else { navigator.clipboard.writeText(text); toast("लिंक कॉपी झाली — WhatsApp/Telegram वर पेस्ट करा"); }
+  };
+}
+
+/* ---------------- ADMIN TAB ---------------- */
+async function renderAdminTab() {
+  const main = document.getElementById("mainArea");
+  main.innerHTML = `<div class="card"><p>लोड होत आहे...</p></div>`;
+  try {
+    const [{ list: pending }, { list: approved }] = await Promise.all([
+      api("listPending", { profile_id: session.id }),
+      api("listProfiles", { profile_id: session.id }),
+    ]);
+    let html = `<h3 class="section-h">Pending Sign-up Requests (${pending.length})</h3><div class="card">`;
+    html += pending.length ? pending.map(p => `
+      <div class="list-item">
+        <div><div class="who">${p.name}</div><div class="meta">📞 ${p.phone||'-'} · TG: ${p.telegram_id}</div></div>
+        <div style="display:flex;gap:6px;">
+          <button class="small-btn" data-approve="${p.id}">Approve</button>
+          <button class="small-btn maroon" data-reject="${p.id}">नकार</button>
+        </div>
+      </div>`).join('') : `<div class="empty">कोणतीही pending request नाही.</div>`;
+    html += `</div>`;
+
+    html += `<h3 class="section-h">सर्व Approved मेंबर (${approved.length})</h3><div class="card">`;
+    html += approved.map(p => `
+      <div class="list-item">
+        <div><div class="who">${p.name} ${p.role==='admin'?'👑':''}</div><div class="meta">📞 ${p.phone||'-'} · UPI: ${p.upi_id||'-'}</div></div>
+      </div>`).join('');
+    html += `</div>`;
+
+    main.innerHTML = html;
+    main.querySelectorAll("[data-approve]").forEach(el => el.onclick = async () => {
+      try { await api("approve", { profile_id: session.id, target_id: el.dataset.approve }); toast("Approve केलं — Telegram वर सूचना गेली"); renderAdminTab(); }
+      catch (e) { toast(e.message); }
+    });
+    main.querySelectorAll("[data-reject]").forEach(el => el.onclick = async () => {
+      if (!confirm("ही request नाकारायची?")) return;
+      try { await api("reject", { profile_id: session.id, target_id: el.dataset.reject }); toast("नाकारलं"); renderAdminTab(); }
+      catch (e) { toast(e.message); }
+    });
+  } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
+}
+
+/* ---------------- PROFILE TAB ---------------- */
+function renderProfileTab() {
+  const main = document.getElementById("mainArea");
+  main.innerHTML = `
+    <div class="card">
+      <h2>${session.name}</h2>
+      <p class="desc">${session.role === 'admin' ? '👑 Admin' : 'Member'}</p>
+      <div class="list-item"><div class="who">फोन</div><div class="meta">${session.phone||'-'}</div></div>
+      <div class="list-item"><div class="who">Telegram ID</div><div class="meta">${session.telegram_id}</div></div>
+      <div class="list-item"><div class="who">UPI ID</div><div class="meta">${session.upi_id||'-'}</div></div>
+      ${session.qr_url ? `<img src="${session.qr_url}" class="qr-preview" style="display:block;margin-top:10px;">` : ''}
+    </div>
+    <button class="btn secondary" id="pLogout">Logout</button>`;
+  document.getElementById("pLogout").onclick = logout;
+}
+
+/* ---------------- boot ---------------- */
+// ?signup असलेल्या शेअर-लिंकवरून आल्यास थेट Sign up फॉर्म उघडा
+const wantsSignup = new URLSearchParams(location.search).has("signup");
+if (session) route("app");
+else if (wantsSignup) renderAuth("signup");
+else route("auth");
+</script>
+</body>
+</html>

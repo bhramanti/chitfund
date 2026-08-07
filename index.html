@@ -129,6 +129,14 @@
   .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg);}}
   h3.section-h{font-family:var(--font-display);font-size:15px;color:var(--navy);margin:18px 0 8px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(35,31,24,.6);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px;}
+  .modal-card{background:var(--paper);border-radius:12px;padding:26px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);border:2px solid var(--gold);}
+  .modal-card .party{font-size:44px;margin-bottom:6px;}
+  .modal-card h2{font-family:var(--font-display);color:var(--maroon);font-size:22px;margin:0 0 4px;}
+  .modal-card .wname{font-family:var(--font-display);font-size:26px;color:var(--navy);margin:8px 0;font-weight:700;}
+  .modal-card p{color:var(--muted);font-size:13px;margin:4px 0;}
+  .modal-card .amt-big{font-family:var(--font-mono);font-size:20px;color:var(--green);font-weight:700;margin:8px 0;}
 </style>
 </head>
 <body>
@@ -237,7 +245,7 @@ function renderLoginForm() {
     <label>PIN</label>
     <input type="password" id="loginPin" placeholder="4-6 अंकी PIN" inputmode="numeric">
     <button class="btn" id="loginBtn">लॉगिन करा</button>
-    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram ID माहीत नाही? Telegram मध्ये <b>@userinfobot</b> ला मेसेज पाठवा — तो लगेच तुमचा ID सांगेल.</p>`;
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram ID माहीत नाही? <a href="https://t.me/userinfobot" target="_blank" rel="noopener" style="color:var(--navy);font-weight:600;">@userinfobot उघडा</a> → Start दाबा → मिळालेला Id इथे टाका.</p>`;
   document.getElementById("loginBtn").onclick = async () => {
     const telegram_id = document.getElementById("loginTid").value.trim();
     const pin = document.getElementById("loginPin").value.trim();
@@ -263,35 +271,28 @@ function renderSignupForm() {
     <label>मोबाईल नंबर</label>
     <input type="tel" id="suPhone" placeholder="9876543210">
     <label>Telegram User ID *</label>
-    <input type="text" id="suTid" placeholder="@userinfobot कडून मिळवा" inputmode="numeric">
-    <label>UPI ID</label>
-    <input type="text" id="suUpi" placeholder="yourname@upi">
-    <label>UPI QR कोड <span style="font-weight:400;">(ऐच्छिक)</span></label>
-    <div class="file-btn" id="qrPickBtn">फाईल निवडा 📎</div>
-    <input type="file" id="suQr" accept="image/*" style="display:none;">
-    <img id="qrPrev" class="qr-preview" style="display:none;">
+    <input type="text" id="suTid" placeholder="फक्त आकडे — उदा. 123456789" inputmode="numeric">
+    <div style="background:var(--paper);border:1px dashed var(--line);border-radius:6px;padding:10px;margin-top:6px;">
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">तुमचा Telegram ID मिळवायचे २ सोपे टप्पे:</p>
+      <p style="font-size:12px;color:var(--ink);margin:0 0 8px;">१. खालचं बटण दाबा → Telegram मध्ये <b>@userinfobot</b> उघडेल → तिथे <b>Start</b> दाबा.<br>२. तो पाठवेल त्यातला <b>Id: 123456789</b> हा आकडा कॉपी करून वर टाका.</p>
+      <a href="https://t.me/userinfobot" target="_blank" rel="noopener" class="small-btn" style="display:inline-block;text-decoration:none;">📲 @userinfobot उघडा</a>
+    </div>
+    <label>UPI ID <span style="font-weight:400;color:var(--muted);">(नंतर प्रोफाईलमध्ये जोडता येईल)</span></label>
+    <input type="text" id="suUpi" placeholder="yourname@upi" style="display:none;">
     <label>PIN सेट करा (लॉगिनसाठी) *</label>
     <input type="password" id="suPin" placeholder="4-6 अंकी PIN" inputmode="numeric">
     <button class="btn maroon" id="suBtn">Sign up करा</button>
-    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram मध्ये <b>@userinfobot</b> ला मेसेज पाठवून तुमचा नंबरी User ID कॉपी करा.</p>`;
-  document.getElementById("qrPickBtn").onclick = () => document.getElementById("suQr").click();
-  document.getElementById("suQr").onchange = async (e) => {
-    const f = e.target.files[0]; if (!f) return;
-    qrBase64 = await fileToBase64(f);
-    const img = document.getElementById("qrPrev");
-    img.src = qrBase64; img.style.display = "block";
-  };
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">⚠️ Sign up आधी एकदा आमच्या बॉट <b>@chitfindbot</b> ला Telegram वर <b>/start</b> पाठवा — तरच सूचना येतील. UPI ID लॉगिननंतर प्रोफाईलमध्ये भरा (चिठ्ठीत भाग घ्यायला आवश्यक).</p>`;
   document.getElementById("suBtn").onclick = async () => {
     const name = document.getElementById("suName").value.trim();
     const phone = document.getElementById("suPhone").value.trim();
     const telegram_id = document.getElementById("suTid").value.trim();
-    const upi_id = document.getElementById("suUpi").value.trim();
     const pin = document.getElementById("suPin").value.trim();
     if (!name || !telegram_id || !pin) return showAuthMsg("* असलेले सर्व फील्ड भरा", true);
     const btn = document.getElementById("suBtn");
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
     try {
-      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id, upi_id, pin, qr_base64: qrBase64 });
+      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id, pin });
       if (isFirstAdmin) {
         showAuthMsg("तुम्ही पहिले युजर असल्यामुळे थेट Admin म्हणून खातं तयार झालं आहे! आता लॉगिन करा.", false);
       } else {
@@ -338,6 +339,44 @@ function renderShell() {
   else if (currentTab === "funds") renderFundsTab();
   else if (currentTab === "admin") renderAdminTab();
   else if (currentTab === "profile") renderProfileTab();
+
+  checkWinnerAlerts();
+}
+
+/* ---------------- विजेता Popup ---------------- */
+async function checkWinnerAlerts() {
+  try {
+    const { alerts } = await api("myAlerts", { profile_id: session.id });
+    if (!alerts || !alerts.length) return;
+    const seenKey = "cf_seen_alerts_" + session.id;
+    const seen = JSON.parse(localStorage.getItem(seenKey) || "[]");
+    // सर्वात अलीकडचा न-बघितलेला विजेता
+    const fresh = alerts.find(a => !seen.includes(a.round_id));
+    if (!fresh) return;
+    showWinnerModal(fresh, () => {
+      seen.push(fresh.round_id);
+      localStorage.setItem(seenKey, JSON.stringify(seen.slice(-50)));
+    });
+  } catch (e) {}
+}
+
+function showWinnerModal(a, onClose) {
+  const ov = document.createElement("div");
+  ov.className = "modal-overlay";
+  ov.innerHTML = `
+    <div class="modal-card">
+      <div class="party">🎉</div>
+      <h2>${a.fund_name}</h2>
+      <p>महिना ${a.month_number} ची चिठ्ठी निघाली</p>
+      <div class="wname">${a.is_me ? 'तुमचं नाव निघालं! 🏆' : a.winner_name}</div>
+      <div class="amt-big">₹${Number(a.amount).toLocaleString('en-IN')}</div>
+      <p>${a.is_me ? 'बाकी सर्वांना तुमचा UPI/QR पाठवला गेला आहे.' : 'कृपया तुमचा हप्ता विजेत्याला पाठवा.'}</p>
+      <button class="btn" id="modalOk">ठीक आहे</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); if (onClose) onClose(); };
+  document.getElementById("modalOk").onclick = close;
+  ov.onclick = (e) => { if (e.target === ov) close(); };
 }
 
 /* ---------------- FUNDS TAB ---------------- */
@@ -401,6 +440,10 @@ async function renderFundDetail(fundId) {
       <div class="card">
         <h2>${fund.name} <span class="tag ${fund.status}" style="margin-left:6px;">${fund.status==='active'?'चालू':'पूर्ण'}</span></h2>
         <p class="desc">₹${Number(fund.installment).toLocaleString('en-IN')} / मेंबर / महिना · Duration: ${members.length} महिने · फेऱ्या: ${rounds.length}/${members.length||0}</p>
+        ${isAdmin ? `<div style="display:flex;gap:6px;margin-top:6px;">
+          <button class="small-btn secondary" id="editFundBtn">✏️ फंड Edit</button>
+          <button class="small-btn maroon" id="deleteFundBtn">🗑 फंड Delete</button>
+        </div>` : ''}
       </div>`;
 
     if (isAdmin && fund.status === 'active') {
@@ -430,6 +473,7 @@ async function renderFundDetail(fundId) {
             <div id="drawResult"></div>
             <button class="btn maroon" id="drawBtn" ${eligible.length===0||members.length===0?'disabled':''}>चिठ्ठी काढा</button>
             ${eligible.length===0 && members.length>0 ? '<p style="font-size:12px;color:var(--muted);">सर्व मेंबरना फंड मिळाला — फंड पूर्ण झाला</p>' : ''}
+            ${rounds.length>0 ? `<button class="btn secondary" id="undoDrawBtn" style="margin-top:8px;">↩️ शेवटची चिठ्ठी रद्द करा (महिना ${lastRound.month_number})</button>` : ''}
           </div>
         </div>`;
     }
@@ -516,6 +560,19 @@ async function renderFundDetail(fundId) {
           setTimeout(() => renderFundDetail(fundId), 1600);
         } catch (e) { toast(e.message); drawBtn.disabled = false; stage.innerHTML=''; }
       };
+
+      const undoBtn = document.getElementById("undoDrawBtn");
+      if (undoBtn) undoBtn.onclick = async () => {
+        if (!confirm(`महिना ${lastRound.month_number} ची चिठ्ठी रद्द करायची? विजेता व त्या फेरीचे पेमेंट रेकॉर्ड मिटतील.`)) return;
+        try {
+          const res = await api("undoLastDraw", { profile_id: session.id, fund_id: fundId });
+          if (res.needsConfirm) {
+            if (!confirm(res.error)) return;
+            await api("undoLastDraw", { profile_id: session.id, fund_id: fundId, force: true });
+          }
+          toast("चिठ्ठी रद्द झाली"); renderFundDetail(fundId);
+        } catch (e) { toast(e.message); }
+      };
     }
 
     main.querySelectorAll("[data-toggle-pay]").forEach(el => {
@@ -549,6 +606,37 @@ async function renderFundDetail(fundId) {
       await api("completeFund", { profile_id: session.id, fund_id: fundId });
       toast("फंड पूर्ण झाला — नवीन फंड सुरू करू शकता");
       currentFundId = null; renderShell();
+    };
+
+    const editFundBtn = document.getElementById("editFundBtn");
+    if (editFundBtn) editFundBtn.onclick = () => {
+      const canEditInst = rounds.length === 0;
+      const box = document.createElement("div");
+      box.className = "card";
+      box.innerHTML = `
+        <h2>फंड संपादन</h2>
+        <label>फंडचं नाव</label>
+        <input type="text" id="efName" value="${(fund.name||'').replace(/"/g,'&quot;')}">
+        <label>मासिक हप्ता ${canEditInst ? '' : '<span style="font-weight:400;color:var(--maroon);">(चिठ्ठी सुरू — बदलता येणार नाही)</span>'}</label>
+        <input type="number" id="efInst" value="${fund.installment}" ${canEditInst?'':'disabled'}>
+        <button class="btn" id="efSave">जतन करा</button>
+        <button class="btn secondary" id="efCancel">रद्द करा</button>`;
+      main.prepend(box); window.scrollTo(0,0);
+      document.getElementById("efCancel").onclick = () => box.remove();
+      document.getElementById("efSave").onclick = async () => {
+        const payload = { profile_id: session.id, fund_id: fundId, name: document.getElementById("efName").value.trim() };
+        if (canEditInst) payload.installment = parseFloat(document.getElementById("efInst").value);
+        try { await api("editFund", payload); toast("फंड अपडेट झाला"); renderFundDetail(fundId); }
+        catch (e) { toast(e.message); }
+      };
+    };
+
+    const deleteFundBtn = document.getElementById("deleteFundBtn");
+    if (deleteFundBtn) deleteFundBtn.onclick = async () => {
+      if (!confirm(`"${fund.name}" हा संपूर्ण फंड कायमचा काढायचा? सर्व फेऱ्या व पेमेंट रेकॉर्ड मिटतील. ही क्रिया परत करता येणार नाही.`)) return;
+      if (!confirm("पक्कं? शेवटची खात्री.")) return;
+      try { await api("deleteFund", { profile_id: session.id, fund_id: fundId }); toast("फंड काढला"); currentFundId = null; renderShell(); }
+      catch (e) { toast(e.message); }
     };
   } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
 }
@@ -586,7 +674,39 @@ async function renderAdminTab() {
       api("listPending", { profile_id: session.id }),
       api("listProfiles", { profile_id: session.id }),
     ]);
-    let html = `<h3 class="section-h">Pending Sign-up Requests (${pending.length})</h3><div class="card">`;
+    let html = `
+      <div class="card" id="statsCard">
+        <h2>📊 एकत्रित आढावा</h2>
+        <p class="desc">लोड होत आहे...</p>
+      </div>
+      <div class="card">
+        <h2>📢 सर्वांना मेसेज पाठवा</h2>
+        <p class="desc">सर्व approved मेंबरना एकत्र Telegram मेसेज.</p>
+        <input type="text" id="bcText" placeholder="उदा. या रविवारी चिठ्ठी काढणार आहोत">
+        <button class="btn" id="bcBtn">पाठवा</button>
+      </div>
+      <div class="card">
+        <h2>📥 डेटा Export</h2>
+        <p class="desc">सर्व फंड, मेंबर, पेमेंट CSV फाईलमध्ये डाउनलोड करा.</p>
+        <button class="btn secondary" id="exportBtn">CSV डाउनलोड करा</button>
+      </div>
+      <div class="card">
+        <h2>+ मेंबर थेट जोडा</h2>
+        <p class="desc">signup न करता Admin स्वतः मेंबर जोडू शकतो. Telegram ID दिला तरच त्याला सूचना जातील.</p>
+        <label>पूर्ण नाव *</label>
+        <input type="text" id="mmName" placeholder="मेंबरचं नाव">
+        <label>मोबाईल नंबर</label>
+        <input type="tel" id="mmPhone" placeholder="9876543210">
+        <label>UPI ID</label>
+        <input type="text" id="mmUpi" placeholder="name@upi">
+        <label>Telegram ID <span style="font-weight:400;">(ऐच्छिक)</span></label>
+        <input type="text" id="mmTid" placeholder="असल्यास आकडे टाका" inputmode="numeric">
+        <label>PIN <span style="font-weight:400;">(ऐच्छिक — default 0000)</span></label>
+        <input type="password" id="mmPin" placeholder="4-6 अंकी" inputmode="numeric">
+        <button class="btn" id="mmBtn">मेंबर जोडा</button>
+      </div>`;
+
+    html += `<h3 class="section-h">Pending Sign-up Requests (${pending.length})</h3><div class="card">`;
     html += pending.length ? pending.map(p => `
       <div class="list-item">
         <div><div class="who">${p.name}</div><div class="meta">📞 ${p.phone||'-'} · TG: ${p.telegram_id}</div></div>
@@ -601,6 +721,11 @@ async function renderAdminTab() {
     html += approved.map(p => `
       <div class="list-item">
         <div><div class="who">${p.name} ${p.role==='admin'?'👑':''}</div><div class="meta">📞 ${p.phone||'-'} · UPI: ${p.upi_id||'-'}</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="small-btn secondary" data-role="${p.id}" data-newrole="${p.role==='admin'?'member':'admin'}">${p.role==='admin'?'Admin काढा':'Admin बनवा'}</button>
+          <button class="small-btn secondary" data-edit="${p.id}">Edit</button>
+          ${p.id===session.id ? '' : `<button class="small-btn maroon" data-del="${p.id}">Delete</button>`}
+        </div>
       </div>`).join('');
     html += `</div>`;
 
@@ -614,13 +739,142 @@ async function renderAdminTab() {
       try { await api("reject", { profile_id: session.id, target_id: el.dataset.reject }); toast("नाकारलं"); renderAdminTab(); }
       catch (e) { toast(e.message); }
     });
+    main.querySelectorAll("[data-edit]").forEach(el => el.onclick = () => {
+      const p = approved.find(x => x.id === el.dataset.edit);
+      if (p) openEditMember(p);
+    });
+    main.querySelectorAll("[data-del]").forEach(el => el.onclick = async () => {
+      const p = approved.find(x => x.id === el.dataset.del);
+      if (!confirm(`"${p?.name}" ला कायमचं काढून टाकायचं? ही क्रिया परत करता येणार नाही.`)) return;
+      try { await api("deleteMember", { profile_id: session.id, target_id: el.dataset.del }); toast("मेंबर काढला"); renderAdminTab(); }
+      catch (e) { toast(e.message); }
+    });
+    main.querySelectorAll("[data-role]").forEach(el => el.onclick = async () => {
+      const p = approved.find(x => x.id === el.dataset.role);
+      const newRole = el.dataset.newrole;
+      const msg = newRole === 'admin' ? `"${p?.name}" ला Admin बनवायचं?` : `"${p?.name}" चे Admin अधिकार काढायचे?`;
+      if (!confirm(msg)) return;
+      try { await api("setRole", { profile_id: session.id, target_id: el.dataset.role, role: newRole }); toast("झालं — Telegram वर सूचना गेली"); renderAdminTab(); }
+      catch (e) { toast(e.message); }
+    });
+    const mmBtn = document.getElementById("mmBtn");
+    if (mmBtn) mmBtn.onclick = async () => {
+      const name = document.getElementById("mmName").value.trim();
+      if (!name) return toast("नाव भरा");
+      const payload = {
+        profile_id: session.id, name,
+        phone: document.getElementById("mmPhone").value.trim(),
+        upi_id: document.getElementById("mmUpi").value.trim(),
+        telegram_id: document.getElementById("mmTid").value.trim() || null,
+        pin: document.getElementById("mmPin").value.trim() || null,
+      };
+      mmBtn.disabled = true;
+      try {
+        const { noTelegram } = await api("addManualMember", payload);
+        toast(noTelegram ? "मेंबर जोडला (Telegram नाही — सूचना जाणार नाहीत)" : "मेंबर जोडला");
+        renderAdminTab();
+      } catch (e) { toast(e.message); mmBtn.disabled = false; }
+    };
+
+    // एकत्रित आढावा लोड करा
+    (async () => {
+      try {
+        const { stats } = await api("adminStats", { profile_id: session.id });
+        const sc = document.getElementById("statsCard");
+        if (sc) sc.innerHTML = `
+          <h2>📊 एकत्रित आढावा</h2>
+          <div class="list-item"><div class="who">एकूण फंड</div><div class="meta amt">${stats.totalFunds} (चालू ${stats.activeFunds})</div></div>
+          <div class="list-item"><div class="who">एकूण मेंबर</div><div class="meta amt">${stats.members}</div></div>
+          <div class="list-item"><div class="who">झालेल्या चिठ्ठ्या</div><div class="meta amt">${stats.rounds}</div></div>
+          <div class="list-item"><div class="who">एकूण वाटप</div><div class="meta amt">₹${Number(stats.totalDisbursed).toLocaleString('en-IN')}</div></div>
+          <div class="list-item"><div class="who">पेमेंट वसुली</div><div class="meta amt">${stats.paymentsPaid}/${stats.paymentsTotal}</div></div>`;
+      } catch (e) {}
+    })();
+
+    const bcBtn = document.getElementById("bcBtn");
+    if (bcBtn) bcBtn.onclick = async () => {
+      const text = document.getElementById("bcText").value.trim();
+      if (!text) return toast("मेसेज लिहा");
+      if (!confirm("सर्व मेंबरना हा मेसेज पाठवायचा?")) return;
+      bcBtn.disabled = true; bcBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      try { const { sent } = await api("broadcast", { profile_id: session.id, text }); toast(`${sent} जणांना मेसेज गेला`); document.getElementById("bcText").value=""; }
+      catch (e) { toast(e.message); }
+      bcBtn.disabled = false; bcBtn.textContent = "पाठवा";
+    };
+
+    const exportBtn = document.getElementById("exportBtn");
+    if (exportBtn) exportBtn.onclick = async () => {
+      exportBtn.disabled = true; exportBtn.innerHTML = '<span class="spinner"></span>तयार करत आहे...';
+      try { const { data } = await api("exportData", { profile_id: session.id }); downloadCsvZip(data); toast("डाउनलोड सुरू"); }
+      catch (e) { toast(e.message); }
+      exportBtn.disabled = false; exportBtn.textContent = "CSV डाउनलोड करा";
+    };
   } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
 }
 
-/* ---------------- PROFILE TAB ---------------- */
+/* ---------------- मेंबर Edit (Admin) ---------------- */
+function openEditMember(p) {
+  const main = document.getElementById("mainArea");
+  const box = document.createElement("div");
+  box.className = "card";
+  box.innerHTML = `
+    <h2>मेंबर संपादन — ${p.name}</h2>
+    <p class="desc">बदल करून "जतन करा" दाबा. PIN रिकामा ठेवला तर बदलणार नाही.</p>
+    <label>पूर्ण नाव</label>
+    <input type="text" id="emName" value="${(p.name||'').replace(/"/g,'&quot;')}">
+    <label>मोबाईल नंबर</label>
+    <input type="tel" id="emPhone" value="${(p.phone||'').replace(/"/g,'&quot;')}">
+    <label>UPI ID</label>
+    <input type="text" id="emUpi" value="${(p.upi_id||'').replace(/"/g,'&quot;')}">
+    <label>नवीन PIN (फक्त बदलायचा असेल तर)</label>
+    <input type="password" id="emPin" placeholder="रिकामा = बदलू नका" inputmode="numeric">
+    <button class="btn" id="emSave">जतन करा</button>
+    <button class="btn secondary" id="emCancel">रद्द करा</button>`;
+  main.prepend(box);
+  window.scrollTo(0, 0);
+  document.getElementById("emCancel").onclick = () => box.remove();
+  document.getElementById("emSave").onclick = async () => {
+    const payload = {
+      profile_id: session.id,
+      target_id: p.id,
+      name: document.getElementById("emName").value.trim(),
+      phone: document.getElementById("emPhone").value.trim(),
+      upi_id: document.getElementById("emUpi").value.trim(),
+    };
+    const pin = document.getElementById("emPin").value.trim();
+    if (pin) payload.pin = pin;
+    if (!payload.name) return toast("नाव रिकामं ठेवता येणार नाही");
+    try { await api("editMember", payload); toast("बदल जतन झाले"); renderAdminTab(); }
+    catch (e) { toast(e.message); }
+  };
+}
+
+/* ---------------- CSV Export ---------------- */
+function toCsv(rows) {
+  if (!rows || !rows.length) return "";
+  const cols = Object.keys(rows[0]);
+  const esc = (v) => { if (v == null) return ""; const s = String(v).replace(/"/g, '""'); return /[",\n]/.test(s) ? `"${s}"` : s; };
+  return cols.join(",") + "\n" + rows.map(r => cols.map(c => esc(r[c])).join(",")).join("\n");
+}
+function downloadCsvZip(data) {
+  let out = "";
+  for (const [table, rows] of Object.entries(data)) {
+    out += `# ${table}\n` + toCsv(rows || []) + "\n\n";
+  }
+  const blob = new Blob([out], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `chitfund-export-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function renderProfileTab() {
   const main = document.getElementById("mainArea");
+  const hasUpi = session.upi_id && session.upi_id.trim() !== "";
   main.innerHTML = `
+    ${!hasUpi ? `<div class="error-box">⚠️ तुमचा UPI ID भरलेला नाही. चिठ्ठीत भाग घेण्यासाठी तो आवश्यक आहे — खाली भरा.</div>` : ''}
     <div class="card">
       <h2>${session.name}</h2>
       <p class="desc">${session.role === 'admin' ? '👑 Admin' : 'Member'}</p>
@@ -629,7 +883,42 @@ function renderProfileTab() {
       <div class="list-item"><div class="who">UPI ID</div><div class="meta">${session.upi_id||'-'}</div></div>
       ${session.qr_url ? `<img src="${session.qr_url}" class="qr-preview" style="display:block;margin-top:10px;">` : ''}
     </div>
+    <div class="card">
+      <h2>पेमेंट माहिती अपडेट करा</h2>
+      <p class="desc">तुमचं नाव निघाल्यावर बाकीचे इथल्या UPI/QR वर पैसे पाठवतील.</p>
+      <label>UPI ID *</label>
+      <input type="text" id="prUpi" value="${(session.upi_id||'').replace(/"/g,'&quot;')}" placeholder="yourname@upi">
+      <label>UPI QR कोड <span style="font-weight:400;">(ऐच्छिक)</span></label>
+      <div class="file-btn" id="prQrPick">QR फाईल निवडा 📎</div>
+      <input type="file" id="prQr" accept="image/*" style="display:none;">
+      <img id="prQrPrev" class="qr-preview" style="display:none;">
+      <label>फोन</label>
+      <input type="tel" id="prPhone" value="${(session.phone||'').replace(/"/g,'&quot;')}" placeholder="9876543210">
+      <button class="btn" id="prSave">जतन करा</button>
+    </div>
     <button class="btn secondary" id="pLogout">Logout</button>`;
+
+  let prQrBase64 = null;
+  document.getElementById("prQrPick").onclick = () => document.getElementById("prQr").click();
+  document.getElementById("prQr").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    prQrBase64 = await fileToBase64(f);
+    const img = document.getElementById("prQrPrev");
+    img.src = prQrBase64; img.style.display = "block";
+  };
+  document.getElementById("prSave").onclick = async () => {
+    const upi_id = document.getElementById("prUpi").value.trim();
+    const phone = document.getElementById("prPhone").value.trim();
+    if (!upi_id) return toast("UPI ID भरा");
+    const btn = document.getElementById("prSave");
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>जतन होत आहे...';
+    try {
+      const { profile } = await api("updateProfile", { profile_id: session.id, upi_id, phone, qr_base64: prQrBase64 });
+      setSession(profile);
+      toast("माहिती जतन झाली");
+      renderProfileTab();
+    } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = "जतन करा"; }
+  };
   document.getElementById("pLogout").onclick = logout;
 }
 

@@ -1628,10 +1628,10 @@ async function renderAdminTab() {
     html += `<h3 class="section-h">${T('adminTab.approvedHeading')(approved.length)}</h3><div class="card">`;
     html += approved.map(p => `
       <div class="list-item">
-        <div><div class="who">${esc(p.name)} ${p.role==='admin'?'👑':''}</div><div class="meta">📞 ${esc(p.phone)||'-'} · UPI: ${esc(p.upi_id)||'-'}</div></div>
+        <div><div class="who">${esc(p.name)} ${p.is_master?'🔒':(p.role==='admin'?'👑':'')}</div><div class="meta">📞 ${esc(p.phone)||'-'} · UPI: ${esc(p.upi_id)||'-'}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
           <button class="small-btn secondary" data-edit="${p.id}">${T('common.edit')}</button>
-          ${p.id===session.id ? '' : `<button class="small-btn maroon" data-del="${p.id}">${T('common.del')}</button>`}
+          ${(p.id===session.id || p.is_master) ? '' : `<button class="small-btn maroon" data-del="${p.id}">${T('common.del')}</button>`}
         </div>
       </div>`).join('');
     html += `</div>`;
@@ -1770,8 +1770,8 @@ function openEditMember(p) {
     </select>
     <label>${T('editMember.roleLabel')}</label>
     <div class="list-item" style="padding:8px 0;">
-      <div class="who">${T('editMember.currentRole')}${p.role === 'admin' ? '👑 ' + T('common.admin') : T('common.member')}</div>
-      <button class="small-btn secondary" id="emRoleBtn">${p.role === 'admin' ? T('common.removeAdmin') : T('common.makeAdmin')}</button>
+      <div class="who">${T('editMember.currentRole')}${p.role === 'admin' ? '👑 ' + T('common.admin') : T('common.member')}${p.is_master ? ' 🔒' : ''}</div>
+      ${p.is_master ? '' : `<button class="small-btn secondary" id="emRoleBtn">${p.role === 'admin' ? T('common.removeAdmin') : T('common.makeAdmin')}</button>`}
     </div>
     <label>${T('editMember.newPinLabel')}</label>
     <input type="password" id="emPin" placeholder="${T('editMember.newPinPlaceholder')}" inputmode="numeric">
@@ -1780,7 +1780,7 @@ function openEditMember(p) {
   main.prepend(box);
   window.scrollTo(0, 0);
   document.getElementById("emCancel").onclick = () => box.remove();
-  document.getElementById("emRoleBtn").onclick = async () => {
+  if (document.getElementById("emRoleBtn")) document.getElementById("emRoleBtn").onclick = async () => {
     const newRole = p.role === 'admin' ? 'member' : 'admin';
     const msg = newRole === 'admin' ? T('adminTab.makeAdminConfirm')(p.name) : T('adminTab.removeAdminConfirm')(p.name);
     if (!confirm(msg)) return;

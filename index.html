@@ -423,44 +423,53 @@ function setAuthLang(l) { authLang = l; localStorage.setItem("cf_auth_lang", l);
 const AUTH_STRINGS = {
   mr: {
     loginTab: "लॉगिन", signupTab: "नवीन Sign up",
-    loginDesc: "तुमच्या Telegram ID आणि PIN ने लॉगिन करा.",
+    loginDesc: "तुमच्या मोबाईल नंबर आणि PIN ने लॉगिन करा.",
+    loginPhoneLabel: "मोबाईल नंबर",
     tidLabel: "Telegram User ID", pinLabel: "PIN", loginBtn: "लॉगिन", remember: "मला लक्षात ठेवा",
     signupDesc: "फॉर्म भरा — Admin approve केल्यावर Telegram वर सूचना मिळेल.",
-    nameLabel: "पूर्ण नाव *", phoneLabel: "मोबाईल नंबर", upiLabel: "UPI ID",
+    nameLabel: "पूर्ण नाव *", phoneLabel: "मोबाईल नंबर *", upiLabel: "UPI ID",
     pinSetLabel: "PIN सेट करा (लॉगिनसाठी) *", signupBtn: "Sign up करा",
     langLabel: "तुमची पसंतीची भाषा / Preferred language",
+    optionalTag: "(ऐच्छिक)",
+    tidWhy: "Telegram सूचना (चिठ्ठी, पेमेंट, रिमाइंडर) हव्या असतील तरच भरा — नंतर Profile मधूनही भरता येईल.",
     tidHelp1: "तुमचा Telegram ID मिळवायचे २ सोपे टप्पे:",
     tidHelp2: "१. खालचं बटण दाबा → Telegram मध्ये <b>@userinfobot</b> उघडेल → तिथे <b>Start</b> दाबा.<br>२. तो पाठवेल त्यातला <b>Id: 123456789</b> हा आकडा कॉपी करून वर टाका.",
     tidBtn: "📲 @userinfobot उघडा",
-    signupNote: "⚠️ Sign up आधी एकदा आमच्या बॉट <b>@chitfindbot</b> ला Telegram वर <b>/start</b> पाठवा — तरच सूचना येतील. UPI ID लॉगिननंतर प्रोफाईलमध्ये भरा (चिठ्ठीत भाग घ्यायला आवश्यक).",
+    signupNote: "⚠️ लॉगिन आता तुमच्या मोबाईल नंबरने होईल (Telegram ID ने नाही). Telegram सूचना हव्या असतील तर वरचा Telegram ID भरा आणि आमच्या बॉट <b>@chitfindbot</b> ला Telegram वर <b>/start</b> पाठवा. UPI ID लॉगिननंतर प्रोफाईलमध्ये भरा (चिठ्ठीत भाग घ्यायला आवश्यक).",
     pendingTitle: "⏳ प्रतीक्षेत", pendingBody: (n) => `नमस्कार ${n}, तुमचं खातं अजून Admin कडून Approve व्हायचंय. Approve झाल्यावर Telegram वर सूचना येईल.`,
   },
   hi: {
     loginTab: "लॉगिन", signupTab: "नया Sign up",
-    loginDesc: "अपने Telegram ID और PIN से लॉगिन करें।",
+    loginDesc: "अपने मोबाइल नंबर और PIN से लॉगिन करें।",
+    loginPhoneLabel: "मोबाइल नंबर",
     tidLabel: "Telegram User ID", pinLabel: "PIN", loginBtn: "लॉगिन", remember: "मुझे याद रखें",
     signupDesc: "फॉर्म भरें — Admin approve करने पर Telegram पर सूचना मिलेगी।",
-    nameLabel: "पूरा नाम *", phoneLabel: "मोबाइल नंबर", upiLabel: "UPI ID",
+    nameLabel: "पूरा नाम *", phoneLabel: "मोबाइल नंबर *", upiLabel: "UPI ID",
     pinSetLabel: "PIN सेट करें (लॉगिन के लिए) *", signupBtn: "Sign up करें",
     langLabel: "आपकी पसंदीदा भाषा / Preferred language",
+    optionalTag: "(ऐच्छिक)",
+    tidWhy: "Telegram सूचनाएं (चिट्ठी, पेमेंट, रिमाइंडर) चाहिए तभी भरें — बाद में Profile से भी भर सकते हैं।",
     tidHelp1: "अपना Telegram ID पाने के 2 आसान स्टेप:",
     tidHelp2: "1. नीचे दिया बटन दबाएं → Telegram में <b>@userinfobot</b> खुलेगा → वहां <b>Start</b> दबाएं।<br>2. वह जो भेजेगा उसमें से <b>Id: 123456789</b> यह नंबर कॉपी करके ऊपर डालें।",
     tidBtn: "📲 @userinfobot खोलें",
-    signupNote: "⚠️ Sign up से पहले एक बार हमारे बॉट <b>@chitfindbot</b> को Telegram पर <b>/start</b> भेजें — तभी सूचनाएं मिलेंगी। UPI ID लॉगिन के बाद प्रोफाइल में भरें (चिट्ठी में भाग लेने के लिए ज़रूरी)।",
+    signupNote: "⚠️ लॉगिन अब आपके मोबाइल नंबर से होगा (Telegram ID से नहीं). Telegram सूचनाएं चाहिए तो ऊपर Telegram ID भरें और हमारे बॉट <b>@chitfindbot</b> को Telegram पर <b>/start</b> भेजें। UPI ID लॉगिन के बाद प्रोफाइल में भरें (चिट्ठी में भाग लेने के लिए ज़रूरी)।",
     pendingTitle: "⏳ प्रतीक्षा में", pendingBody: (n) => `नमस्ते ${n}, आपका खाता अभी Admin से Approve होना बाकी है। Approve होने पर Telegram पर सूचना आएगी।`,
   },
   en: {
     loginTab: "Login", signupTab: "New Sign up",
-    loginDesc: "Log in with your Telegram ID and PIN.",
+    loginDesc: "Log in with your mobile number and PIN.",
+    loginPhoneLabel: "Mobile number",
     tidLabel: "Telegram User ID", pinLabel: "PIN", loginBtn: "Login", remember: "Remember me",
     signupDesc: "Fill the form — you'll get a Telegram notification once Admin approves you.",
-    nameLabel: "Full name *", phoneLabel: "Mobile number", upiLabel: "UPI ID",
+    nameLabel: "Full name *", phoneLabel: "Mobile number *", upiLabel: "UPI ID",
     pinSetLabel: "Set a PIN (for login) *", signupBtn: "Sign up",
     langLabel: "तुमची पसंतीची भाषा / Preferred language",
+    optionalTag: "(Optional)",
+    tidWhy: "Fill this only if you want Telegram notifications (draws, payments, reminders) — you can also add it later from Profile.",
     tidHelp1: "2 easy steps to get your Telegram ID:",
     tidHelp2: "1. Tap the button below → <b>@userinfobot</b> opens in Telegram → tap <b>Start</b> there.<br>2. Copy the number after <b>Id: 123456789</b> from its reply and paste it above.",
     tidBtn: "📲 Open @userinfobot",
-    signupNote: "⚠️ Before signing up, send <b>/start</b> to our bot <b>@chitfindbot</b> on Telegram once — otherwise you won't get notifications. Add your UPI ID in Profile after logging in (required to take part in the draw).",
+    signupNote: "⚠️ Login is now with your mobile number (not Telegram ID). If you want Telegram notifications, fill the Telegram ID above and send <b>/start</b> to our bot <b>@chitfindbot</b> on Telegram. Add your UPI ID in Profile after logging in (required to take part in the draw).",
     pendingTitle: "⏳ Pending", pendingBody: (n) => `Hi ${n}, your account is still waiting for Admin approval. You'll get a Telegram notification once approved.`,
   },
 };
@@ -576,12 +585,19 @@ const UI_STRINGS = {
       sendBtn: "पाठवा", exportHeading: "📥 डेटा Export",
       exportDesc: "सर्व फंड, मेंबर, पेमेंट CSV फाईलमध्ये डाउनलोड करा.",
       exportBtn: "CSV डाउनलोड करा", addMemberHeading: "+ मेंबर थेट जोडा",
-      addMemberDesc: "signup न करता Admin स्वतः मेंबर जोडू शकतो. Telegram ID दिला तरच त्याला सूचना जातील.",
+      addMemberDesc: "signup न करता Admin स्वतः मेंबर जोडू शकतो. मोबाईल नंबर हाच त्याचा लॉगिन असेल. Telegram ID दिला तरच त्याला सूचना जातील.",
       fullNameLabel: "पूर्ण नाव *", memberNamePlaceholder: "मेंबरचं नाव",
-      phoneLabel: "मोबाईल नंबर", tidOptionalLabel: "Telegram ID",
+      phoneLabel: "मोबाईल नंबर * (लॉगिनसाठी वापरला जातो)", tidOptionalLabel: "Telegram ID",
       tidOptionalTag: "(ऐच्छिक)", tidPlaceholder: "असल्यास आकडे टाका",
       pinOptionalLabel: "PIN", pinOptionalTag: "(ऐच्छिक — default 0000)",
       pinPlaceholder: "4-6 अंकी", langLabel: "भाषा / Language", addMemberBtn: "मेंबर जोडा",
+      phoneRequired: "मोबाईल नंबर भरा — तोच लॉगिनसाठी वापरला जातो",
+      credShareHeading: "🔐 नवीन मेंबरचे Login तपशील शेअर करा",
+      credShareDesc: "खालचा मेसेज Copy/Share करून या मेंबरला WhatsApp/SMS ने पाठवा — यातच त्याचा मोबाईल नंबर, PIN, आणि Telegram bot जॉइन करण्याची सूचना आहे.",
+      credShareText: (name, phone, pin) => `🎉 चिट फंड मॅनेजरमध्ये तुमचं खातं तयार झालं आहे, ${name}!\n\nलॉगिन कसं करायचं:\n1. https://bhramanti.github.io/chitfund/ उघडा\n2. मोबाईल नंबर: ${phone}\n3. PIN: ${pin}\n4. "लॉगिन" बटण दाबा\n\nTelegram वर सूचना (चिठ्ठी, पेमेंट, रिमाइंडर) हव्या असतील तर Telegram उघडून @${CONFIG.BOT_USERNAME} ला /start पाठवा.`,
+      notifyLoginBtn: "🔐 सर्व सदस्यांना नवीन लॉगिन कळवा",
+      notifyLoginConfirm: "सर्व approved सदस्यांना 'लॉगिन आता मोबाईल नंबरने' अशी सूचना Telegram वर पाठवायची?",
+      notifyLoginSent: (n) => `${n} जणांना सूचना गेली`,
       pendingHeading: (n) => `Pending Sign-up Requests (${n})`,
       noPending: "कोणतीही request बाकी नाही",
       noPendingSub: "नवीन signup आल्यावर तो इथे approve साठी दिसेल.",
@@ -611,6 +627,7 @@ const UI_STRINGS = {
       heading: (name) => `मेंबर संपादन — ${name}`,
       desc: "बदल करून \"जतन करा\" दाबा. PIN रिकामा ठेवला तर बदलणार नाही.",
       fullNameLabel: "पूर्ण नाव", phoneLabel: "मोबाईल नंबर", tidLabel: "Telegram ID",
+      phoneNote: "हाच नंबर आता या मेंबरचा लॉगिन आहे — बदलल्यास त्याला नवीन नंबर कळवा.",
       tidPlaceholder: "फक्त आकडे — नसेल तर रिकामा",
       tidNote: "Telegram ID रिकामा किंवा चुकीचा असेल तर या मेंबरला बॉटवरून सूचना जाणार नाहीत.",
       langLabel: "भाषा / Language", roleLabel: "Role", currentRole: "सध्या: ",
@@ -738,12 +755,19 @@ const UI_STRINGS = {
       sendBtn: "भेजें", exportHeading: "📥 डेटा Export",
       exportDesc: "सभी फंड, मेंबर, पेमेंट CSV फाइल में डाउनलोड करें.",
       exportBtn: "CSV डाउनलोड करें", addMemberHeading: "+ मेंबर सीधे जोड़ें",
-      addMemberDesc: "signup किए बिना Admin खुद मेंबर जोड़ सकता है. Telegram ID दिया तभी उसे सूचनाएं जाएंगी.",
+      addMemberDesc: "signup किए बिना Admin खुद मेंबर जोड़ सकता है. मोबाइल नंबर ही उसका लॉगिन होगा. Telegram ID दिया तभी उसे सूचनाएं जाएंगी.",
       fullNameLabel: "पूरा नाम *", memberNamePlaceholder: "मेंबर का नाम",
-      phoneLabel: "मोबाइल नंबर", tidOptionalLabel: "Telegram ID",
+      phoneLabel: "मोबाइल नंबर * (लॉगिन के लिए इस्तेमाल होता है)", tidOptionalLabel: "Telegram ID",
       tidOptionalTag: "(ऐच्छिक)", tidPlaceholder: "हो तो अंक डालें",
       pinOptionalLabel: "PIN", pinOptionalTag: "(ऐच्छिक — default 0000)",
       pinPlaceholder: "4-6 अंक", langLabel: "भाषा / Language", addMemberBtn: "मेंबर जोड़ें",
+      phoneRequired: "मोबाइल नंबर भरें — वही लॉगिन के लिए इस्तेमाल होता है",
+      credShareHeading: "🔐 नए मेंबर के Login डिटेल शेयर करें",
+      credShareDesc: "नीचे का मेसेज Copy/Share करके इस मेंबर को WhatsApp/SMS से भेजें — इसमें उसका मोबाइल नंबर, PIN, और Telegram bot जॉइन करने की सूचना है.",
+      credShareText: (name, phone, pin) => `🎉 चिट फंड मैनेजर में आपका खाता बन गया है, ${name}!\n\nलॉगिन कैसे करें:\n1. https://bhramanti.github.io/chitfund/ खोलें\n2. मोबाइल नंबर: ${phone}\n3. PIN: ${pin}\n4. "लॉगिन" बटन दबाएं\n\nTelegram पर सूचनाएं (चिट्ठी, पेमेंट, रिमाइंडर) चाहिए तो Telegram खोलकर @${CONFIG.BOT_USERNAME} को /start भेजें.`,
+      notifyLoginBtn: "🔐 सभी सदस्यों को नया लॉगिन बताएं",
+      notifyLoginConfirm: "सभी approved सदस्यों को 'लॉगिन अब मोबाइल नंबर से' यह सूचना Telegram पर भेजनी है?",
+      notifyLoginSent: (n) => `${n} लोगों को सूचना गई`,
       pendingHeading: (n) => `Pending Sign-up Requests (${n})`,
       noPending: "कोई request बाकी नहीं",
       noPendingSub: "नया signup आने पर वह यहां approve के लिए दिखेगा.",
@@ -773,6 +797,7 @@ const UI_STRINGS = {
       heading: (name) => `मेंबर संपादन — ${name}`,
       desc: "बदलाव करके \"जतन करें\" दबाएं. PIN खाली रखा तो बदलेगा नहीं.",
       fullNameLabel: "पूरा नाम", phoneLabel: "मोबाइल नंबर", tidLabel: "Telegram ID",
+      phoneNote: "यही नंबर अब इस मेंबर का लॉगिन है — बदलने पर उसे नया नंबर बताएं.",
       tidPlaceholder: "सिर्फ अंक — नहीं है तो खाली",
       tidNote: "Telegram ID खाली या गलत है तो इस मेंबर को बॉट से सूचनाएं नहीं जाएंगी.",
       langLabel: "भाषा / Language", roleLabel: "Role", currentRole: "अभी: ",
@@ -900,12 +925,19 @@ const UI_STRINGS = {
       sendBtn: "Send", exportHeading: "📥 Data export",
       exportDesc: "Download all funds, members and payments as a CSV file.",
       exportBtn: "Download CSV", addMemberHeading: "+ Add member directly",
-      addMemberDesc: "Admin can add a member without signup. Notifications go out only if a Telegram ID is given.",
+      addMemberDesc: "Admin can add a member without signup. Their mobile number will be their login. Notifications go out only if a Telegram ID is given.",
       fullNameLabel: "Full name *", memberNamePlaceholder: "Member's name",
-      phoneLabel: "Mobile number", tidOptionalLabel: "Telegram ID",
+      phoneLabel: "Mobile number * (used for login)", tidOptionalLabel: "Telegram ID",
       tidOptionalTag: "(optional)", tidPlaceholder: "Enter digits if you have it",
       pinOptionalLabel: "PIN", pinOptionalTag: "(optional — default 0000)",
       pinPlaceholder: "4-6 digits", langLabel: "Language", addMemberBtn: "Add member",
+      phoneRequired: "Enter a mobile number — it's used for login",
+      credShareHeading: "🔐 Share the new member's login details",
+      credShareDesc: "Copy/Share the message below and send it to this member via WhatsApp/SMS — it includes their mobile number, PIN, and instructions to join the Telegram bot.",
+      credShareText: (name, phone, pin) => `🎉 Your account in Chit Fund Manager is ready, ${name}!\n\nHow to log in:\n1. Open https://bhramanti.github.io/chitfund/\n2. Mobile number: ${phone}\n3. PIN: ${pin}\n4. Tap "Login"\n\nIf you want Telegram notifications (draws, payments, reminders), open Telegram and send /start to @${CONFIG.BOT_USERNAME}.`,
+      notifyLoginBtn: "🔐 Notify everyone of the new login method",
+      notifyLoginConfirm: "Send all approved members a Telegram notice that login is now by mobile number?",
+      notifyLoginSent: (n) => `Notified ${n} member(s)`,
       pendingHeading: (n) => `Pending Sign-up Requests (${n})`,
       noPending: "No pending requests",
       noPendingSub: "New sign-ups will appear here for approval.",
@@ -935,6 +967,7 @@ const UI_STRINGS = {
       heading: (name) => `Edit member — ${name}`,
       desc: "Make changes and press \"Save\". Leave PIN blank to keep it unchanged.",
       fullNameLabel: "Full name", phoneLabel: "Mobile number", tidLabel: "Telegram ID",
+      phoneNote: "This number is now this member's login — if you change it, tell them the new number.",
       tidPlaceholder: "Digits only — leave blank if none",
       tidNote: "If Telegram ID is blank or incorrect, this member won't get bot notifications.",
       langLabel: "Language", roleLabel: "Role", currentRole: "Currently: ",
@@ -1010,26 +1043,25 @@ function renderLoginForm() {
   c.innerHTML = `
     <p class="desc">${S.loginDesc}</p>
     <div id="authMsg"></div>
-    <label>${S.tidLabel}</label>
-    <input type="text" id="loginTid" placeholder="e.g. 123456789" inputmode="numeric" value="${saved?.telegram_id ? String(saved.telegram_id).replace(/"/g,'&quot;') : ''}">
+    <label>${S.loginPhoneLabel}</label>
+    <input type="tel" id="loginPhone" placeholder="9876543210" inputmode="numeric" value="${saved?.phone ? String(saved.phone).replace(/"/g,'&quot;') : ''}">
     <label>${S.pinLabel}</label>
     <input type="password" id="loginPin" placeholder="PIN" inputmode="numeric" value="${saved?.pin ? String(saved.pin).replace(/"/g,'&quot;') : ''}">
     <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:600;color:var(--ink);cursor:pointer;">
       <input type="checkbox" id="loginRemember" ${saved ? 'checked' : ''} style="width:18px;height:18px;">
       ${S.remember}
     </label>
-    <button class="btn" id="loginBtn">${S.loginBtn}</button>
-    <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Telegram ID? <a href="https://t.me/userinfobot" target="_blank" rel="noopener" style="color:var(--navy);font-weight:600;">@userinfobot</a></p>`;
+    <button class="btn" id="loginBtn">${S.loginBtn}</button>`;
   document.getElementById("loginBtn").onclick = async () => {
-    const telegram_id = document.getElementById("loginTid").value.trim();
+    const phone = document.getElementById("loginPhone").value.trim();
     const pin = document.getElementById("loginPin").value.trim();
     const remember = document.getElementById("loginRemember").checked;
-    if (!telegram_id || !pin) return showAuthMsg("Telegram ID + PIN", true);
+    if (!phone || !pin) return showAuthMsg(S.loginPhoneLabel + " + PIN", true);
     const btn = document.getElementById("loginBtn");
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
     try {
-      const { profile } = await api("login", { telegram_id, pin });
-      if (remember) localStorage.setItem("cf_remember", JSON.stringify({ telegram_id, pin }));
+      const { profile } = await api("login", { phone, pin });
+      if (remember) localStorage.setItem("cf_remember", JSON.stringify({ phone, pin }));
       else localStorage.removeItem("cf_remember");
       setSession(profile);
       route("app");
@@ -1048,8 +1080,9 @@ function renderSignupForm() {
     <input type="text" id="suName">
     <label>${S.phoneLabel}</label>
     <input type="tel" id="suPhone" placeholder="9876543210">
-    <label>Telegram User ID *</label>
+    <label>${S.tidLabel} <span style="font-weight:400;color:var(--muted);">${S.optionalTag}</span></label>
     <input type="text" id="suTid" placeholder="123456789" inputmode="numeric">
+    <p style="font-size:11.5px;color:var(--muted);margin:2px 0 6px;">${S.tidWhy}</p>
     <div style="background:var(--paper);border:1px dashed var(--line);border-radius:6px;padding:10px;margin-top:6px;">
       <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">${S.tidHelp1}</p>
       <p style="font-size:12px;color:var(--ink);margin:0 0 8px;">${S.tidHelp2}</p>
@@ -1073,11 +1106,11 @@ function renderSignupForm() {
     const telegram_id = document.getElementById("suTid").value.trim();
     const pin = document.getElementById("suPin").value.trim();
     const preferred_language = document.getElementById("suLang").value;
-    if (!name || !telegram_id || !pin) return showAuthMsg("*", true);
+    if (!name || !phone || !pin) return showAuthMsg("*", true);
     const btn = document.getElementById("suBtn");
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
     try {
-      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id, pin, preferred_language });
+      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id: telegram_id || null, pin, preferred_language });
       showAuthMsg(isFirstAdmin
         ? "तुम्ही पहिले युजर असल्यामुळे थेट Admin म्हणून खातं तयार झालं आहे! आता लॉगिन करा. / You are the first user, so you're now Admin — please log in."
         : "Sign up request पाठवली! Admin approve केल्यावर सूचना मिळेल. / Sign up request sent! You'll be notified once Admin approves.", false);
@@ -1538,6 +1571,34 @@ async function renderFundDetail(fundId) {
   } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
 }
 
+function openShareCredentials(name, phone, pin) {
+  // text मुद्दाम plain ठेवलंय (esc() नाही) — हे clipboard/native-share ला जातं, तिथे HTML entities नकोत.
+  // innerHTML मध्ये दाखवताना खालीच esc(text) ने escape केलं आहे.
+  const text = T('adminTab.credShareText')(name, phone, pin || '0000');
+  const main = document.getElementById("mainArea");
+  const box = document.createElement("div");
+  box.className = "card";
+  box.innerHTML = `
+    <h2>${T('adminTab.credShareHeading')}</h2>
+    <p class="desc">${T('adminTab.credShareDesc')}</p>
+    <div class="share-link-box">
+      <code style="white-space:pre-wrap;text-align:left;display:block;">${esc(text)}</code>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
+        <button class="small-btn" id="credCopyBtn">${T('shareLink.copyLink')}</button>
+        <button class="small-btn maroon" id="credShareBtn">${T('shareLink.shareBtn')}</button>
+      </div>
+    </div>
+    <button class="btn secondary" id="credCloseBtn" style="margin-top:10px;">${T('common.cancel')}</button>`;
+  main.prepend(box);
+  window.scrollTo(0, 0);
+  document.getElementById("credCopyBtn").onclick = () => { navigator.clipboard.writeText(text); toast(T('shareLink.copied')); };
+  document.getElementById("credShareBtn").onclick = async () => {
+    if (navigator.share) { try { await navigator.share({ text }); } catch(e){} }
+    else { navigator.clipboard.writeText(text); toast(T('shareLink.copiedForShare')); }
+  };
+  document.getElementById("credCloseBtn").onclick = () => box.remove();
+}
+
 function openShareLink(url) {
   const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`;
   const main = document.getElementById("mainArea");
@@ -1586,6 +1647,10 @@ async function renderAdminTab() {
         <input type="text" id="bcText" placeholder="${T('adminTab.broadcastPlaceholder')}">
         <button class="btn" id="bcBtn">${T('adminTab.sendBtn')}</button>
         <div id="bcResult" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <button class="btn secondary" id="notifyLoginBtn">${T('adminTab.notifyLoginBtn')}</button>
+        <div id="nlResult" style="margin-top:8px;"></div>
       </div>
       <div class="card">
         <h2>${T('adminTab.exportHeading')}</h2>
@@ -1659,10 +1724,11 @@ async function renderAdminTab() {
     const mmBtn = document.getElementById("mmBtn");
     if (mmBtn) mmBtn.onclick = async () => {
       const name = document.getElementById("mmName").value.trim();
+      const phone = document.getElementById("mmPhone").value.trim();
       if (!name) return toast(T('adminTab.nameRequired'));
+      if (!phone) return toast(T('adminTab.phoneRequired'));
       const payload = {
-        profile_id: session.id, name,
-        phone: document.getElementById("mmPhone").value.trim(),
+        profile_id: session.id, name, phone,
         upi_id: document.getElementById("mmUpi").value.trim(),
         telegram_id: document.getElementById("mmTid").value.trim() || null,
         pin: document.getElementById("mmPin").value.trim() || null,
@@ -1670,9 +1736,10 @@ async function renderAdminTab() {
       };
       mmBtn.disabled = true;
       try {
-        const { noTelegram } = await api("addManualMember", payload);
+        const { noTelegram, plainPin } = await api("addManualMember", payload);
         toast(noTelegram ? T('adminTab.memberAddedNoTelegram') : T('adminTab.memberAdded'));
-        renderAdminTab();
+        await renderAdminTab();
+        openShareCredentials(name, phone, plainPin);
       } catch (e) { toast(e.message); mmBtn.disabled = false; }
     };
 
@@ -1735,6 +1802,23 @@ async function renderAdminTab() {
       bcBtn.disabled = false; bcBtn.textContent = T('adminTab.sendBtn');
     };
 
+    const notifyLoginBtn = document.getElementById("notifyLoginBtn");
+    if (notifyLoginBtn) notifyLoginBtn.onclick = async () => {
+      if (!confirm(T('adminTab.notifyLoginConfirm'))) return;
+      notifyLoginBtn.disabled = true; notifyLoginBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
+      const nlResult = document.getElementById("nlResult");
+      nlResult.innerHTML = "";
+      try {
+        const { sent, failed } = await api("notifyLoginChange", { profile_id: session.id });
+        toast(T('adminTab.notifyLoginSent')(sent));
+        if (failed && failed.length) {
+          nlResult.innerHTML = `<div class="error-box">${T('adminTab.broadcastFailedHeading')(failed.length)}<br>${failed.map(f => esc(f)).join('<br>')}</div>`;
+        }
+      }
+      catch (e) { toast(e.message); }
+      notifyLoginBtn.disabled = false; notifyLoginBtn.textContent = T('adminTab.notifyLoginBtn');
+    };
+
     const exportBtn = document.getElementById("exportBtn");
     if (exportBtn) exportBtn.onclick = async () => {
       exportBtn.disabled = true; exportBtn.innerHTML = '<span class="spinner"></span>' + T('common.loading');
@@ -1757,6 +1841,7 @@ function openEditMember(p) {
     <input type="text" id="emName" value="${(p.name||'').replace(/"/g,'&quot;')}">
     <label>${T('editMember.phoneLabel')}</label>
     <input type="tel" id="emPhone" value="${(p.phone||'').replace(/"/g,'&quot;')}">
+    <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">${T('editMember.phoneNote')}</p>
     <label>UPI ID</label>
     <input type="text" id="emUpi" value="${(p.upi_id||'').replace(/"/g,'&quot;')}">
     <label>${T('editMember.tidLabel')}</label>
@@ -1913,9 +1998,9 @@ function renderProfileTab() {
 const GUIDE_SECTIONS = [
   { for: "all", icon: "🔐", t: { mr: "लॉगिन आणि Sign up", hi: "लॉगिन और Sign up", en: "Login & Sign up" },
     body: {
-      mr: "नवीन असाल तर 'नवीन Sign up' टॅबवर जा — नाव, फोन, Telegram User ID (हा @userinfobot कडून मिळतो, फॉर्ममध्ये लिंक दिलेली आहे), तुमची भाषा (मराठी/हिंदी/English), आणि 4-6 अंकी PIN भरा. Sign up आधी @chitfindbot ला Telegram वर /start पाठवणं आवश्यक आहे — नाहीतर तुम्हाला कुठलीही सूचना मिळणार नाही. पहिला व्यक्ती जो signup करतो तो आपोआप Admin बनतो; त्यानंतरचे सगळे 'pending' राहतात जोपर्यंत Admin त्यांना Approve करत नाही. लॉगिन करताना 'मला लक्षात ठेवा' टिक केलं तर पुढच्या वेळी ID+PIN आपोआप भरलेले दिसतील (फक्त स्वतःच्या फोनवर वापरा).",
-      hi: "नए हैं तो 'नया Sign up' टैब पर जाएं — नाम, फोन, Telegram User ID (@userinfobot से मिलता है, फॉर्म में लिंक है), अपनी भाषा (मराठी/हिंदी/English), और 4-6 अंकों का PIN भरें। Sign up से पहले @chitfindbot को Telegram पर /start भेजना ज़रूरी है — नहीं तो कोई सूचना नहीं मिलेगी। सबसे पहला signup करने वाला अपने आप Admin बन जाता है; बाकी सभी 'pending' रहते हैं जब तक Admin approve न करे। लॉगिन में 'मुझे याद रखें' टिक करने पर अगली बार ID+PIN अपने आप भर जाएंगे (सिर्फ अपने फोन पर करें)।",
-      en: "New users go to the 'नवीन Sign up' tab — fill in name, phone, Telegram User ID (get it from @userinfobot, link is in the form), your preferred language (Marathi/Hindi/English), and a 4-6 digit PIN. You must send /start to @chitfindbot on Telegram before signing up, otherwise you won't receive any notifications. The very first person to sign up automatically becomes Admin; everyone after that stays 'pending' until Admin approves them. Ticking 'मला लक्षात ठेवा' on login saves your ID+PIN on that phone for next time (only use on your own phone)." } },
+      mr: "आता लॉगिन तुमच्या <b>मोबाईल नंबर + PIN</b> ने होतं (Telegram ID ने नाही). नवीन असाल तर 'नवीन Sign up' टॅबवर जा — नाव, मोबाईल नंबर, 4-6 अंकी PIN, आणि तुमची भाषा (मराठी/हिंदी/English) भरा. Telegram User ID हा फॉर्ममध्ये आता ऐच्छिक आहे — तो दिला आणि @chitfindbot ला Telegram वर /start पाठवलं तरच तुम्हाला चिठ्ठी/पेमेंट/रिमाइंडरच्या सूचना मिळतील; नंतर Profile मधूनही भरता येतो. पहिला व्यक्ती जो signup करतो तो आपोआप Admin बनतो; त्यानंतरचे सगळे 'pending' राहतात जोपर्यंत Admin त्यांना Approve करत नाही. लॉगिन करताना 'मला लक्षात ठेवा' टिक केलं तर पुढच्या वेळी नंबर+PIN आपोआप भरलेले दिसतील (फक्त स्वतःच्या फोनवर वापरा).",
+      hi: "अब लॉगिन आपके <b>मोबाइल नंबर + PIN</b> से होता है (Telegram ID से नहीं). नए हैं तो 'नया Sign up' टैब पर जाएं — नाम, मोबाइल नंबर, 4-6 अंकों का PIN, और अपनी भाषा (मराठी/हिंदी/English) भरें। Telegram User ID फॉर्म में अब ऐच्छिक है — वह दिया और @chitfindbot को Telegram पर /start भेजा तभी आपको चिट्ठी/पेमेंट/रिमाइंडर की सूचनाएं मिलेंगी; बाद में Profile से भी भर सकते हैं। सबसे पहला signup करने वाला अपने आप Admin बन जाता है; बाकी सभी 'pending' रहते हैं जब तक Admin approve न करे। लॉगिन में 'मुझे याद रखें' टिक करने पर अगली बार नंबर+PIN अपने आप भर जाएंगे (सिर्फ अपने फोन पर करें)।",
+      en: "Login is now with your <b>mobile number + PIN</b> (not Telegram ID). New users go to the 'नवीन Sign up' tab — fill in name, mobile number, a 4-6 digit PIN, and your preferred language (Marathi/Hindi/English). The Telegram User ID field is now optional — only fill it and send /start to @chitfindbot on Telegram if you want notifications for draws, payments and reminders; you can also add it later from Profile. The very first person to sign up automatically becomes Admin; everyone after that stays 'pending' until Admin approves them. Ticking 'मला लक्षात ठेवा' on login saves your number+PIN on that phone for next time (only use on your own phone)." } },
   { for: "all", icon: "📒", t: { mr: "फंड्स टॅब", hi: "फंड्स टैब", en: "Funds tab" },
     body: {
       mr: "इथे तुम्ही ज्या चिट फंडांचे मेंबर आहात ते सगळे दिसतात. कुठल्याही फंडावर टॅप केलं की त्याचं आतलं पान उघडतं — मेंबर, चिठ्ठी, पेमेंट सगळं तिथे.",
@@ -1963,14 +2048,14 @@ const GUIDE_SECTIONS = [
       en: "'बाकी असलेल्यांना रिमाइंडर' and 'QR पुन्हा पाठवा' — shows who it failed to reach (usually they haven't /start'd the bot). 'हिशोब Telegram वर शेअर करा' sends that round's ledger to every fund member. The Admin tab's 'थकीत हप्ते — सर्व फंड एकत्र' card lists all overdue payments across every fund, tap to jump to that fund." } },
   { for: "admin", icon: "🛡", t: { mr: "मेंबर व्यवस्थापन (Admin)", hi: "मेंबर प्रबंधन (Admin)", en: "Member management (Admin)" },
     body: {
-      mr: "'Pending Sign-up Requests' मध्ये approve/नकार. 'सर्व Approved मेंबर' मध्ये Admin बनवा/काढा, Edit, Delete. Edit उघडल्यावर नाव, फोन, UPI, Telegram ID, भाषा, PIN, आणि Role — सगळं एकाच फॉर्ममध्ये बदलता येतं. Delete फक्त चिठ्ठी-सुरू-न-झालेल्या फंडातल्या मेंबरसाठी चालतं. 'मेंबर थेट जोडा' ने signup न होता नवीन मेंबर बनवता येतो.",
-      hi: "'Pending Sign-up Requests' में approve/नकार। 'सर्व Approved मेंबर' में Admin बनवा/काढा, Edit, Delete। Edit खोलने पर नाम, फोन, UPI, Telegram ID, भाषा, PIN, और Role — सब एक ही फॉर्म में बदल सकते हैं। Delete सिर्फ उन मेंबर के लिए चलता है जो चिट्ठी-शुरू-न-हुए फंड में हों। 'मेंबर थेट जोडा' से signup के बिना नया मेंबर बना सकते हैं।",
-      en: "'Pending Sign-up Requests' — approve/reject. 'सर्व Approved मेंबर' — Admin toggle, Edit, Delete. Opening Edit lets you change name, phone, UPI, Telegram ID, language, PIN, and role — all in one form. Delete only works for members not yet in a fund where the draw has started. 'मेंबर थेट जोडा' creates a member without them signing up." } },
+      mr: "'Pending Sign-up Requests' मध्ये approve/नकार. 'सर्व Approved मेंबर' मध्ये Edit, Delete (Admin बनवा/काढा हे आता Edit च्या आतच आहे). Edit उघडल्यावर नाव, फोन (हाच लॉगिन आहे — बदलल्यास मेंबरला कळवा), UPI, Telegram ID, भाषा, PIN, आणि Role — सगळं एकाच फॉर्ममध्ये बदलता येतं. Delete फक्त चिठ्ठी-सुरू-न-झालेल्या फंडातल्या मेंबरसाठी चालतं. 'मेंबर थेट जोडा' ने signup न होता नवीन मेंबर बनवता येतो (मोबाईल नंबर आवश्यक) — जोडल्यावर लगेच एक 'Login तपशील शेअर करा' कार्ड उघडतं, ते Copy/Share करून त्या मेंबरला WhatsApp/SMS ने पाठवा. सर्व जुन्या सदस्यांना 'लॉगिन आता मोबाईल नंबरने' अशी एकवेळची सूचना पाठवण्यासाठी '🔐 सर्व सदस्यांना नवीन लॉगिन कळवा' बटण वापरा (पुढच्या सेक्शनमध्ये).",
+      hi: "'Pending Sign-up Requests' में approve/नकार। 'सर्व Approved मेंबर' में Edit, Delete (Admin बनवा/काढा अब Edit के अंदर ही है)। Edit खोलने पर नाम, फोन (यही लॉगिन है — बदलने पर मेंबर को बताएं), UPI, Telegram ID, भाषा, PIN, और Role — सब एक ही फॉर्म में बदल सकते हैं। Delete सिर्फ उन मेंबर के लिए चलता है जो चिट्ठी-शुरू-न-हुए फंड में हों। 'मेंबर थेट जोडा' से signup के बिना नया मेंबर बना सकते हैं (मोबाइल नंबर ज़रूरी) — जोड़ने पर एक 'Login डिटेल शेयर करें' कार्ड खुलता है, उसे Copy/Share करके उस मेंबर को WhatsApp/SMS से भेजें। सभी पुराने सदस्यों को 'लॉगिन अब मोबाइल नंबर से' यह एकबारगी सूचना भेजने के लिए '🔐 सभी सदस्यों को नया लॉगिन बताएं' बटन इस्तेमाल करें (आगे के सेक्शन में)।",
+      en: "'Pending Sign-up Requests' — approve/reject. 'सर्व Approved मेंबर' — Edit, Delete (the Admin toggle now lives inside Edit). Opening Edit lets you change name, phone (this is now their login — tell the member if you change it), UPI, Telegram ID, language, PIN, and role — all in one form. Delete only works for members not yet in a fund where the draw has started. 'मेंबर थेट जोडा' creates a member without them signing up (mobile number required) — right after adding, a 'share login details' card opens; Copy/Share it and send it to the member via WhatsApp/SMS. Use the '🔐 Notify everyone of the new login method' button (next section) to send all existing members a one-time notice that login is now by mobile number." } },
   { for: "admin", icon: "📊", t: { mr: "आढावा, Broadcast, Export (Admin)", hi: "आढावा, Broadcast, Export (Admin)", en: "Overview, broadcast, export (Admin)" },
     body: {
-      mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं. 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना Telegram मेसेज पाठवतं (मेसेज auto-translate होत नाही, जसा टाईप कराल तसा जातो) — कोणाला गेला नाही ते बटणाखाली दिसेल. 'CSV डाउनलोड करा' सगळा डेटा एका फाईलमध्ये देतं.",
-      hi: "'एकत्रित आढावा' सभी फंड की कुल जानकारी दिखाता है। 'सर्वांना मेसेज पाठवा' सभी approved मेंबर को Telegram मेसेज भेजता है (मेसेज auto-translate नहीं होता, जो टाइप करेंगे वही जाएगा) — किसे नहीं गया वह बटन के नीचे दिखेगा। 'CSV डाउनलोड करा' सारा डेटा एक फाइल में देता है।",
-      en: "'एकत्रित आढावा' shows totals across all funds. 'सर्वांना मेसेज पाठवा' sends a Telegram message to every approved member (not auto-translated, sent exactly as typed) — anyone it failed to reach shows below the button. 'CSV डाउनलोड करा' exports all data into one file." } },
+      mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं. 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना Telegram मेसेज पाठवतं (मेसेज auto-translate होत नाही, जसा टाईप कराल तसा जातो) — कोणाला गेला नाही ते बटणाखाली दिसेल. '🔐 सर्व सदस्यांना नवीन लॉगिन कळवा' — लॉगिन मोबाईल नंबरने झाल्यावर सगळ्या जुन्या सदस्यांना एकवेळची सूचना (त्यांचा नंबर + पायऱ्या) पाठवतं. 'CSV डाउनलोड करा' सगळा डेटा एका फाईलमध्ये देतं.",
+      hi: "'एकत्रित आढावा' सभी फंड की कुल जानकारी दिखाता है। 'सर्वांना मेसेज पाठवा' सभी approved मेंबर को Telegram मेसेज भेजता है (मेसेज auto-translate नहीं होता, जो टाइप करेंगे वही जाएगा) — किसे नहीं गया वह बटन के नीचे दिखेगा। '🔐 सभी सदस्यों को नया लॉगिन बताएं' — लॉगिन मोबाइल नंबर से होने पर सभी पुराने सदस्यों को एकबारगी सूचना (उनका नंबर + स्टेप्स) भेजता है। 'CSV डाउनलोड करा' सारा डेटा एक फाइल में देता है।",
+      en: "'एकत्रित आढावा' shows totals across all funds. 'सर्वांना मेसेज पाठवा' sends a Telegram message to every approved member (not auto-translated, sent exactly as typed) — anyone it failed to reach shows below the button. '🔐 Notify everyone of the new login method' sends all existing members a one-time notice (their number + steps) now that login is by mobile number. 'CSV डाउनलोड करा' exports all data into one file." } },
   { for: "all", icon: "🛠", t: { mr: "समस्या आल्यास", hi: "समस्या आने पर", en: "Troubleshooting" },
     body: {
       mr: "Telegram मेसेज येत नाही? आधी बॉटला /start केलंय का ते तपासा. Draw अडतो? कोणाचा UPI ID रिकामा आहे ते बघा (नाव दिसेल). काहीतरी अडकलं? Logout करून पुन्हा Login करा — डेटाबेसमधलं काहीच बदलत नाही, फक्त फोनवरचा जुना session साफ होतो.",

@@ -313,14 +313,18 @@ async function api(action, payload = {}) {
     body: JSON.stringify({ action, payload }),
   });
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error || "काहीतरी चुकलं");
+  if (!data.ok) throw new Error(data.error || T('common.genericError'));
   return data;
 }
 
 /* ---------------- session ---------------- */
 let session = JSON.parse(localStorage.getItem("cf_session") || "null");
+// लॉगिननंतर संपूर्ण अॅपची भाषा (uiLang) — authLang पेक्षा वेगळी; ती फक्त लॉगिन/signup स्क्रीनसाठी आहे.
+// session.preferred_language वरून सेट होते आणि प्रोफाईलमध्ये भाषा बदलली की लगेच अपडेट होते.
+let uiLang = (session && session.preferred_language) || "mr";
 function setSession(profile) {
   session = profile;
+  uiLang = profile.preferred_language || "mr";
   localStorage.setItem("cf_session", JSON.stringify(profile));
 }
 function logout() {
@@ -460,6 +464,503 @@ const AUTH_STRINGS = {
     pendingTitle: "⏳ Pending", pendingBody: (n) => `Hi ${n}, your account is still waiting for Admin approval. You'll get a Telegram notification once approved.`,
   },
 };
+
+/* ============================================================
+   लॉगिनोत्तर संपूर्ण अॅपची भाषा (Funds/Fund-detail/Admin/Profile/Modals)
+   uiLang नुसार UI_STRINGS मधून योग्य भाषा उचलली जाते. T("a.b.c") हा helper वापरा.
+   ============================================================ */
+const UI_STRINGS = {
+  mr: {
+    common: {
+      save: "जतन करा", cancel: "रद्द करा", logout: "बाहेर पडा",
+      admin: "Admin", member: "Member", active: "चालू", completed: "पूर्ण",
+      waiting: "प्रतीक्षेत", won: "फंड मिळाला", notGiven: "दिलेला नाही", none: "-",
+      loading: "लोड होत आहे...", sending: "पाठवत आहे...", you: " (तुम्ही)",
+      adminPick: "Admin निवड", makeAdmin: "Admin बनवा", removeAdmin: "Admin काढा",
+      edit: "Edit", del: "Delete", approve: "Approve", reject: "नकार",
+      month: (n) => `महिना ${n}`, genericError: "काहीतरी चुकलं",
+    },
+    nav: { funds: "फंड्स", admin: "Admin", profile: "प्रोफाईल" },
+    winnerModal: {
+      monthDraw: (n) => `महिना ${n} ची चिठ्ठी निघाली`,
+      youWon: "तुमचं नाव निघालं! 🏆",
+      othersPaid: "बाकी सर्वांना तुमचा UPI/QR पाठवला गेला आहे.",
+      sendToWinner: "कृपया तुमचा हप्ता विजेत्याला पाठवा.",
+      ok: "ठीक आहे",
+    },
+    fundsTab: {
+      newFundHeading: "+ नवीन चिट फंड", nameLabel: "फंडचं नाव",
+      namePlaceholder: "उदा. Trekizens Bachat Gat 2026",
+      instLabel: "मासिक हप्ता (₹ प्रत्येक मेंबरचा)", instPlaceholder: "5000",
+      createBtn: "फंड तयार करा", yourFunds: "तुमचे फंड्स",
+      emptyTitle: "अजून एकही फंड नाही",
+      emptyAdminSub: "वर दिलेल्या फॉर्ममधून पहिला चिट फंड तयार करा.",
+      emptyMemberSub: "Admin ने फंड तयार करून तुम्हाला जोडलं की तो इथे दिसेल.",
+      perMonth: "/महिना", fillNameInst: "नाव व हप्ता भरा", created: "फंड तयार झाला",
+    },
+    paymentProof: {
+      title: "🧾 स्क्रीनशॉट जोडता का?",
+      desc: "वादावाद टाळण्यासाठी — ऐच्छिक आहे. फक्त तुम्हाला, विजेत्याला, आणि Admin ला दिसेल.",
+      pick: "स्क्रीनशॉट निवडा 📎", pickAnother: "वेगळा फोटो निवडा 📎",
+      compressing: "कॉम्प्रेस होत आहे...", save: "जतन करा",
+      skip: "स्क्रीनशॉटशिवाय भरला मार्क करा", cancel: "‹ रद्द करा / मागे",
+      photoFail: "फोटो प्रोसेस करता आला नाही",
+    },
+    fundDetail: {
+      backAll: "‹ सर्व फंड्स",
+      perMemberMonth: (inst, months, rounds) => `₹${inst} / मेंबर / महिना · Duration: ${months} महिने · फेऱ्या: ${rounds}`,
+      editFund: "✏️ फंड Edit", deleteFund: "🗑 फंड Delete",
+      addMemberHeading: "मेंबर जोडा", addToFund: "फंडमध्ये जोडा",
+      shareSignup: "🔗 Sign-up लिंक शेअर करा",
+      membersHeading: (n) => `मेंबर (${n})`,
+      noMembers: "अजून मेंबर नाहीत",
+      noMembersAdminSub: "वर 'मेंबर जोडा' मधून approved मेंबर या फंडात जोडा.",
+      noMembersMemberSub: "Admin मेंबर जोडतील.",
+      drawHeading: "🎟 या महिन्याची चिठ्ठी", drawBtn: "चिठ्ठी काढा",
+      manualDrawBtn: "🎯 विजेता स्वतः निवडा",
+      manualDrawSelectLabel: "Eligible मेंबरमधून विजेता निवडा",
+      manualDrawNote: "ही फेरी \"Admin निवड\" म्हणून सर्वांना Telegram मेसेजमध्ये स्पष्ट दिसेल — random draw सारखी लपवलेली नाही.",
+      manualDrawConfirmBtn: "या मेंबरला विजेता ठरवा",
+      allWon: "सर्व मेंबरना फंड मिळाला — फंड पूर्ण झाला",
+      undoDraw: (m) => `↩️ शेवटची चिठ्ठी रद्द करा (महिना ${m})`,
+      collectionHeading: (m, paid, total) => `महिना ${m} — वसुली (${paid}/${total})`,
+      overdueTag: "थकीत ⚠️", viewProofTitle: "पेमेंट स्क्रीनशॉट बघा",
+      paidTag: "भरला ✓", unpaidTapTag: "बाकी — टॅप करा", unpaidTag: "बाकी",
+      remindBtn: "⏰ बाकी असलेल्यांना रिमाइंडर", resendBtn: "🔁 QR पुन्हा पाठवा",
+      shareLedgerBtn: "📒 हिशोब Telegram वर शेअर करा",
+      sendToWinnerHeading: "💳 विजेत्याला पैसे पाठवा",
+      winnerLine: (name, amt) => `विजेता: <b>${name}</b> — रक्कम ₹${amt}`,
+      upiIdLabel: "UPI ID:", recordHeading: "विजेत्यांची नोंद",
+      recordLine: (m, name) => `महिना ${m} — ${name}`,
+      collectedOf: (paid, total) => `वसूल ${paid}/${total}`,
+      noDraws: "अजून चिठ्ठी निघालेली नाही",
+      noDrawsAdminSub: "मेंबर जोडून 'चिठ्ठी काढा' दाबा.",
+      noDrawsMemberSub: "पहिली चिठ्ठी निघाली की इथे नोंद दिसेल.",
+      completeFundBtn: "✅ फंड पूर्ण म्हणून बंद करा",
+      noOneSelected: "कोणी निवडलेलं नाही",
+      memberAddedCatchUp: (n) => `मेंबर जोडला — मागील ${n} हप्ते catch-up म्हणून बाकी नोंदवले`,
+      memberAdded: "मेंबर जोडला",
+      drawnToast: (name) => `चिठ्ठी निघाली: ${name} — सर्वांना Telegram वर सूचना गेली`,
+      noneAvailable: "कोणी उपलब्ध नाही", selectMember: "मेंबर निवडा",
+      manualConfirm: (name) => `"${name}" ला या महिन्याचा विजेता ठरवायचं? सर्वांना Telegram वर "Admin निवड" असं स्पष्ट कळेल.`,
+      manualDrawnToast: (name) => `"${name}" ला विजेता ठरवलं — सर्वांना Telegram वर सूचना गेली`,
+      undoConfirm: (m) => `महिना ${m} ची चिठ्ठी रद्द करायची? विजेता व त्या फेरीचे पेमेंट रेकॉर्ड मिटतील.`,
+      undone: "चिठ्ठी रद्द झाली",
+      remindSent: (n) => `${n} जणांना रिमाइंडर गेला`,
+      remindPartial: (sent, fl) => `${sent} जणांना गेला, ${fl.length} जणांना गेला नाही (${fl.join(', ')})`,
+      resendSent: (n) => `${n} जणांना QR/UPI पुन्हा गेला`,
+      resendPartial: (sent, fl) => `${sent} जणांना गेला, ${fl} जणांना गेला नाही`,
+      shareLedgerConfirm: (m) => `महिना ${m} चा हिशोब सर्व फंड-मेंबरना Telegram वर पाठवायचा?`,
+      shareLedgerSent: (n) => `${n} जणांना हिशोब गेला`,
+      completeConfirm: "हा फंड पूर्ण झाला म्हणून बंद करायचा?",
+      completed: "फंड पूर्ण झाला — नवीन फंड सुरू करू शकता",
+      editHeading: "फंड संपादन", editNameLabel: "फंडचं नाव",
+      editInstLabel: "मासिक हप्ता", editInstLocked: "(चिठ्ठी सुरू — बदलता येणार नाही)",
+      fundUpdated: "फंड अपडेट झाला",
+      deleteConfirm1: (name) => `"${name}" हा संपूर्ण फंड कायमचा काढायचा? सर्व फेऱ्या व पेमेंट रेकॉर्ड मिटतील. ही क्रिया परत करता येणार नाही.`,
+      deleteConfirm2: "पक्कं? शेवटची खात्री.", fundDeleted: "फंड काढला",
+    },
+    shareLink: {
+      heading: "Sign-up लिंक शेअर करा", copyLink: "लिंक कॉपी करा", shareBtn: "📤 शेअर करा",
+      copied: "लिंक कॉपी झाली",
+      shareText: (url) => `चिट फंड मॅनेजरमध्ये Sign up करा:\n${url}`,
+      shareTitle: "चिट फंड — Sign up",
+      copiedForShare: "लिंक कॉपी झाली — WhatsApp/Telegram वर पेस्ट करा",
+    },
+    adminTab: {
+      statsHeading: "📊 एकत्रित आढावा",
+      overdueHeading: "⚠️ थकीत हप्ते — सर्व फंड एकत्र",
+      broadcastHeading: "📢 सर्वांना मेसेज पाठवा",
+      broadcastDesc: "सर्व approved मेंबरना एकत्र Telegram मेसेज.",
+      broadcastPlaceholder: "उदा. या रविवारी चिठ्ठी काढणार आहोत",
+      sendBtn: "पाठवा", exportHeading: "📥 डेटा Export",
+      exportDesc: "सर्व फंड, मेंबर, पेमेंट CSV फाईलमध्ये डाउनलोड करा.",
+      exportBtn: "CSV डाउनलोड करा", addMemberHeading: "+ मेंबर थेट जोडा",
+      addMemberDesc: "signup न करता Admin स्वतः मेंबर जोडू शकतो. Telegram ID दिला तरच त्याला सूचना जातील.",
+      fullNameLabel: "पूर्ण नाव *", memberNamePlaceholder: "मेंबरचं नाव",
+      phoneLabel: "मोबाईल नंबर", tidOptionalLabel: "Telegram ID",
+      tidOptionalTag: "(ऐच्छिक)", tidPlaceholder: "असल्यास आकडे टाका",
+      pinOptionalLabel: "PIN", pinOptionalTag: "(ऐच्छिक — default 0000)",
+      pinPlaceholder: "4-6 अंकी", langLabel: "भाषा / Language", addMemberBtn: "मेंबर जोडा",
+      pendingHeading: (n) => `Pending Sign-up Requests (${n})`,
+      noPending: "कोणतीही request बाकी नाही",
+      noPendingSub: "नवीन signup आल्यावर तो इथे approve साठी दिसेल.",
+      approvedHeading: (n) => `सर्व Approved मेंबर (${n})`,
+      approvedToast: "Approve केलं — Telegram वर सूचना गेली",
+      rejectConfirm: "ही request नाकारायची?", rejected: "नाकारलं",
+      deleteMemberConfirm: (name) => `"${name}" ला कायमचं काढून टाकायचं? ही क्रिया परत करता येणार नाही.`,
+      memberDeleted: "मेंबर काढला",
+      makeAdminConfirm: (name) => `"${name}" ला Admin बनवायचं?`,
+      removeAdminConfirm: (name) => `"${name}" चे Admin अधिकार काढायचे?`,
+      roleChanged: "झालं — Telegram वर सूचना गेली",
+      nameRequired: "नाव भरा",
+      memberAddedNoTelegram: "मेंबर जोडला (Telegram नाही — सूचना जाणार नाहीत)",
+      memberAdded: "मेंबर जोडला",
+      totalFunds: "एकूण फंड", totalFundsActive: (n) => `(चालू ${n})`,
+      totalMembers: "एकूण मेंबर", roundsHeld: "झालेल्या चिठ्ठ्या",
+      totalDisbursed: "एकूण वाटप", paymentCollection: "पेमेंट वसुली",
+      noOverdue: "सध्या कोणीही थकीत नाही 🎉",
+      overdueHeadingCount: (n) => `⚠️ थकीत हप्ते — सर्व फंड एकत्र (${n})`,
+      overdueDue: (date, days) => `देय ${date} पासून ${days} दिवस थकीत`,
+      writeMessage: "मेसेज लिहा", broadcastConfirm: "सर्व मेंबरना हा मेसेज पाठवायचा?",
+      broadcastSent: (n) => `${n} जणांना मेसेज गेला`,
+      broadcastFailedHeading: (n) => `${n} जणांना गेला नाही:`,
+      exportDone: "डाउनलोड सुरू",
+    },
+    editMember: {
+      heading: (name) => `मेंबर संपादन — ${name}`,
+      desc: "बदल करून \"जतन करा\" दाबा. PIN रिकामा ठेवला तर बदलणार नाही.",
+      fullNameLabel: "पूर्ण नाव", phoneLabel: "मोबाईल नंबर", tidLabel: "Telegram ID",
+      tidPlaceholder: "फक्त आकडे — नसेल तर रिकामा",
+      tidNote: "Telegram ID रिकामा किंवा चुकीचा असेल तर या मेंबरला बॉटवरून सूचना जाणार नाहीत.",
+      langLabel: "भाषा / Language", roleLabel: "Role", currentRole: "सध्या: ",
+      newPinLabel: "नवीन PIN (फक्त बदलायचा असेल तर)", newPinPlaceholder: "रिकामा = बदलू नका",
+      saved: "बदल जतन झाले", nameRequired: "नाव रिकामं ठेवता येणार नाही",
+    },
+    profileTab: {
+      upiMissingWarning: "⚠️ तुमचा UPI ID भरलेला नाही. चिठ्ठीत भाग घेण्यासाठी तो आवश्यक आहे — खाली भरा.",
+      phoneLabel: "फोन", tidLabel: "Telegram ID", upiLabel: "UPI ID",
+      langHeading: "भाषा / Language",
+      langDesc: "Telegram सूचना/मेसेज याच भाषेत जातील. / Telegram notifications will be sent in this language.",
+      langSaveBtn: "भाषा जतन करा / Save language",
+      langUpdated: "भाषा बदलली / Language updated",
+      paymentInfoHeading: "पेमेंट माहिती अपडेट करा",
+      paymentInfoDesc: "तुमचं नाव निघाल्यावर बाकीचे इथल्या UPI/QR वर पैसे पाठवतील.",
+      upiIdRequiredLabel: "UPI ID *", qrLabel: "UPI QR कोड", qrOptionalTag: "(ऐच्छिक)",
+      qrPick: "QR फाईल निवडा 📎", upiRequired: "UPI ID भरा",
+      saving: "जतन होत आहे...", saved: "माहिती जतन झाली",
+      guideBtn: "📘 वापर मार्गदर्शक / User Guide",
+    },
+  },
+  hi: {
+    common: {
+      save: "जतन करें", cancel: "रद्द करें", logout: "लॉगआउट",
+      admin: "Admin", member: "Member", active: "चालू", completed: "पूर्ण",
+      waiting: "प्रतीक्षा में", won: "फंड मिल गया", notGiven: "दिया नहीं गया", none: "-",
+      loading: "लोड हो रहा है...", sending: "भेजा जा रहा है...", you: " (आप)",
+      adminPick: "Admin चुनाव", makeAdmin: "Admin बनाएं", removeAdmin: "Admin हटाएं",
+      edit: "Edit", del: "Delete", approve: "Approve", reject: "नकारें",
+      month: (n) => `महीना ${n}`, genericError: "कुछ गलत हुआ",
+    },
+    nav: { funds: "फंड्स", admin: "Admin", profile: "प्रोफाइल" },
+    winnerModal: {
+      monthDraw: (n) => `महीना ${n} की चिट्ठी निकली`,
+      youWon: "आपका नाम निकला! 🏆",
+      othersPaid: "बाकी सभी को आपका UPI/QR भेज दिया गया है.",
+      sendToWinner: "कृपया अपनी किश्त विजेता को भेजें.",
+      ok: "ठीक है",
+    },
+    fundsTab: {
+      newFundHeading: "+ नया चिट फंड", nameLabel: "फंड का नाम",
+      namePlaceholder: "उदा. Trekizens Bachat Gat 2026",
+      instLabel: "मासिक किश्त (₹ प्रत्येक मेंबर की)", instPlaceholder: "5000",
+      createBtn: "फंड बनाएं", yourFunds: "आपके फंड्स",
+      emptyTitle: "अभी कोई फंड नहीं है",
+      emptyAdminSub: "ऊपर दिए फॉर्म से पहला चिट फंड बनाएं.",
+      emptyMemberSub: "Admin फंड बनाकर आपको जोड़ेंगे तो वह यहां दिखेगा.",
+      perMonth: "/महीना", fillNameInst: "नाम और किश्त भरें", created: "फंड बन गया",
+    },
+    paymentProof: {
+      title: "🧾 स्क्रीनशॉट जोड़ना है?",
+      desc: "विवाद से बचने के लिए — यह ऐच्छिक है. सिर्फ आपको, विजेता को, और Admin को दिखेगा.",
+      pick: "स्क्रीनशॉट चुनें 📎", pickAnother: "दूसरी फोटो चुनें 📎",
+      compressing: "कॉम्प्रेस हो रहा है...", save: "जतन करें",
+      skip: "स्क्रीनशॉट के बिना भरा मार्क करें", cancel: "‹ रद्द करें / वापस",
+      photoFail: "फोटो प्रोसेस नहीं हो सकी",
+    },
+    fundDetail: {
+      backAll: "‹ सभी फंड्स",
+      perMemberMonth: (inst, months, rounds) => `₹${inst} / मेंबर / महीना · Duration: ${months} महीने · फेरे: ${rounds}`,
+      editFund: "✏️ फंड Edit", deleteFund: "🗑 फंड Delete",
+      addMemberHeading: "मेंबर जोड़ें", addToFund: "फंड में जोड़ें",
+      shareSignup: "🔗 Sign-up लिंक शेयर करें",
+      membersHeading: (n) => `मेंबर (${n})`,
+      noMembers: "अभी कोई मेंबर नहीं है",
+      noMembersAdminSub: "ऊपर 'मेंबर जोड़ें' से approved मेंबर इस फंड में जोड़ें.",
+      noMembersMemberSub: "Admin मेंबर जोड़ेंगे.",
+      drawHeading: "🎟 इस महीने की चिट्ठी", drawBtn: "चिट्ठी निकालें",
+      manualDrawBtn: "🎯 विजेता खुद चुनें",
+      manualDrawSelectLabel: "Eligible मेंबर में से विजेता चुनें",
+      manualDrawNote: "यह राउंड \"Admin चुनाव\" के रूप में सभी को Telegram मेसेज में स्पष्ट दिखेगा — random draw जैसे छुपा नहीं है.",
+      manualDrawConfirmBtn: "इस मेंबर को विजेता तय करें",
+      allWon: "सभी मेंबर को फंड मिल गया — फंड पूरा हुआ",
+      undoDraw: (m) => `↩️ पिछली चिट्ठी रद्द करें (महीना ${m})`,
+      collectionHeading: (m, paid, total) => `महीना ${m} — वसूली (${paid}/${total})`,
+      overdueTag: "बाकी ⚠️", viewProofTitle: "पेमेंट स्क्रीनशॉट देखें",
+      paidTag: "भरा ✓", unpaidTapTag: "बाकी — टैप करें", unpaidTag: "बाकी",
+      remindBtn: "⏰ बाकी वालों को रिमाइंडर", resendBtn: "🔁 QR फिर भेजें",
+      shareLedgerBtn: "📒 हिसाब Telegram पर शेयर करें",
+      sendToWinnerHeading: "💳 विजेता को पैसे भेजें",
+      winnerLine: (name, amt) => `विजेता: <b>${name}</b> — राशि ₹${amt}`,
+      upiIdLabel: "UPI ID:", recordHeading: "विजेताओं का रिकॉर्ड",
+      recordLine: (m, name) => `महीना ${m} — ${name}`,
+      collectedOf: (paid, total) => `वसूल ${paid}/${total}`,
+      noDraws: "अभी कोई चिट्ठी नहीं निकली",
+      noDrawsAdminSub: "मेंबर जोड़कर 'चिट्ठी निकालें' दबाएं.",
+      noDrawsMemberSub: "पहली चिट्ठी निकलने पर यहां रिकॉर्ड दिखेगा.",
+      completeFundBtn: "✅ फंड पूरा मानकर बंद करें",
+      noOneSelected: "कोई चुना नहीं गया",
+      memberAddedCatchUp: (n) => `मेंबर जुड़ गया — पिछली ${n} किश्तें catch-up के रूप में बाकी दर्ज हुईं`,
+      memberAdded: "मेंबर जुड़ गया",
+      drawnToast: (name) => `चिट्ठी निकली: ${name} — सभी को Telegram पर सूचना गई`,
+      noneAvailable: "कोई उपलब्ध नहीं", selectMember: "मेंबर चुनें",
+      manualConfirm: (name) => `"${name}" को इस महीने का विजेता तय करना है? सभी को Telegram पर "Admin चुनाव" ऐसा स्पष्ट पता चलेगा.`,
+      manualDrawnToast: (name) => `"${name}" को विजेता तय किया — सभी को Telegram पर सूचना गई`,
+      undoConfirm: (m) => `महीना ${m} की चिट्ठी रद्द करनी है? विजेता और उस राउंड के पेमेंट रिकॉर्ड मिट जाएंगे.`,
+      undone: "चिट्ठी रद्द हो गई",
+      remindSent: (n) => `${n} लोगों को रिमाइंडर गया`,
+      remindPartial: (sent, fl) => `${sent} को गया, ${fl.length} को नहीं गया (${fl.join(', ')})`,
+      resendSent: (n) => `${n} लोगों को QR/UPI फिर से गया`,
+      resendPartial: (sent, fl) => `${sent} को गया, ${fl} को नहीं गया`,
+      shareLedgerConfirm: (m) => `महीना ${m} का हिसाब सभी फंड-मेंबर को Telegram पर भेजना है?`,
+      shareLedgerSent: (n) => `${n} लोगों को हिसाब गया`,
+      completeConfirm: "यह फंड पूरा मानकर बंद करना है?",
+      completed: "फंड पूरा हुआ — नया फंड शुरू कर सकते हैं",
+      editHeading: "फंड संपादन", editNameLabel: "फंड का नाम",
+      editInstLabel: "मासिक किश्त", editInstLocked: "(चिट्ठी शुरू — बदल नहीं सकते)",
+      fundUpdated: "फंड अपडेट हुआ",
+      deleteConfirm1: (name) => `"${name}" यह पूरा फंड हमेशा के लिए हटाना है? सभी राउंड और पेमेंट रिकॉर्ड मिट जाएंगे. यह क्रिया वापस नहीं हो सकती.`,
+      deleteConfirm2: "पक्का? आखिरी पुष्टि.", fundDeleted: "फंड हटा दिया",
+    },
+    shareLink: {
+      heading: "Sign-up लिंक शेयर करें", copyLink: "लिंक कॉपी करें", shareBtn: "📤 शेयर करें",
+      copied: "लिंक कॉपी हो गई",
+      shareText: (url) => `चिट फंड मैनेजर में Sign up करें:\n${url}`,
+      shareTitle: "चिट फंड — Sign up",
+      copiedForShare: "लिंक कॉपी हो गई — WhatsApp/Telegram पर पेस्ट करें",
+    },
+    adminTab: {
+      statsHeading: "📊 समग्र आढावा",
+      overdueHeading: "⚠️ बाकी किश्तें — सभी फंड मिलाकर",
+      broadcastHeading: "📢 सभी को मेसेज भेजें",
+      broadcastDesc: "सभी approved मेंबर को एक साथ Telegram मेसेज.",
+      broadcastPlaceholder: "उदा. इस रविवार चिट्ठी निकालेंगे",
+      sendBtn: "भेजें", exportHeading: "📥 डेटा Export",
+      exportDesc: "सभी फंड, मेंबर, पेमेंट CSV फाइल में डाउनलोड करें.",
+      exportBtn: "CSV डाउनलोड करें", addMemberHeading: "+ मेंबर सीधे जोड़ें",
+      addMemberDesc: "signup किए बिना Admin खुद मेंबर जोड़ सकता है. Telegram ID दिया तभी उसे सूचनाएं जाएंगी.",
+      fullNameLabel: "पूरा नाम *", memberNamePlaceholder: "मेंबर का नाम",
+      phoneLabel: "मोबाइल नंबर", tidOptionalLabel: "Telegram ID",
+      tidOptionalTag: "(ऐच्छिक)", tidPlaceholder: "हो तो अंक डालें",
+      pinOptionalLabel: "PIN", pinOptionalTag: "(ऐच्छिक — default 0000)",
+      pinPlaceholder: "4-6 अंक", langLabel: "भाषा / Language", addMemberBtn: "मेंबर जोड़ें",
+      pendingHeading: (n) => `Pending Sign-up Requests (${n})`,
+      noPending: "कोई request बाकी नहीं",
+      noPendingSub: "नया signup आने पर वह यहां approve के लिए दिखेगा.",
+      approvedHeading: (n) => `सभी Approved मेंबर (${n})`,
+      approvedToast: "Approve किया — Telegram पर सूचना गई",
+      rejectConfirm: "यह request नकारनी है?", rejected: "नकार दिया",
+      deleteMemberConfirm: (name) => `"${name}" को हमेशा के लिए हटाना है? यह क्रिया वापस नहीं हो सकती.`,
+      memberDeleted: "मेंबर हटाया",
+      makeAdminConfirm: (name) => `"${name}" को Admin बनाना है?`,
+      removeAdminConfirm: (name) => `"${name}" के Admin अधिकार हटाने हैं?`,
+      roleChanged: "हो गया — Telegram पर सूचना गई",
+      nameRequired: "नाम भरें",
+      memberAddedNoTelegram: "मेंबर जुड़ गया (Telegram नहीं — सूचनाएं नहीं जाएंगी)",
+      memberAdded: "मेंबर जुड़ गया",
+      totalFunds: "कुल फंड", totalFundsActive: (n) => `(चालू ${n})`,
+      totalMembers: "कुल मेंबर", roundsHeld: "हुई चिट्ठियां",
+      totalDisbursed: "कुल वितरण", paymentCollection: "पेमेंट वसूली",
+      noOverdue: "अभी कोई बाकी नहीं है 🎉",
+      overdueHeadingCount: (n) => `⚠️ बाकी किश्तें — सभी फंड मिलाकर (${n})`,
+      overdueDue: (date, days) => `देय ${date} से ${days} दिन बाकी`,
+      writeMessage: "मेसेज लिखें", broadcastConfirm: "सभी मेंबर को यह मेसेज भेजना है?",
+      broadcastSent: (n) => `${n} लोगों को मेसेज गया`,
+      broadcastFailedHeading: (n) => `${n} लोगों को नहीं गया:`,
+      exportDone: "डाउनलोड शुरू",
+    },
+    editMember: {
+      heading: (name) => `मेंबर संपादन — ${name}`,
+      desc: "बदलाव करके \"जतन करें\" दबाएं. PIN खाली रखा तो बदलेगा नहीं.",
+      fullNameLabel: "पूरा नाम", phoneLabel: "मोबाइल नंबर", tidLabel: "Telegram ID",
+      tidPlaceholder: "सिर्फ अंक — नहीं है तो खाली",
+      tidNote: "Telegram ID खाली या गलत है तो इस मेंबर को बॉट से सूचनाएं नहीं जाएंगी.",
+      langLabel: "भाषा / Language", roleLabel: "Role", currentRole: "अभी: ",
+      newPinLabel: "नया PIN (सिर्फ बदलना हो तो)", newPinPlaceholder: "खाली = बदलें नहीं",
+      saved: "बदलाव जतन हुए", nameRequired: "नाम खाली नहीं रख सकते",
+    },
+    profileTab: {
+      upiMissingWarning: "⚠️ आपका UPI ID भरा नहीं है. चिट्ठी में भाग लेने के लिए यह ज़रूरी है — नीचे भरें.",
+      phoneLabel: "फोन", tidLabel: "Telegram ID", upiLabel: "UPI ID",
+      langHeading: "भाषा / Language",
+      langDesc: "Telegram सूचनाएं/मेसेज इसी भाषा में जाएंगे. / Telegram notifications will be sent in this language.",
+      langSaveBtn: "भाषा जतन करें / Save language",
+      langUpdated: "भाषा बदली / Language updated",
+      paymentInfoHeading: "पेमेंट जानकारी अपडेट करें",
+      paymentInfoDesc: "आपका नाम निकलने पर बाकी लोग यहां के UPI/QR पर पैसे भेजेंगे.",
+      upiIdRequiredLabel: "UPI ID *", qrLabel: "UPI QR कोड", qrOptionalTag: "(ऐच्छिक)",
+      qrPick: "QR फाइल चुनें 📎", upiRequired: "UPI ID भरें",
+      saving: "जतन हो रहा है...", saved: "जानकारी जतन हुई",
+      guideBtn: "📘 उपयोग गाइड / User Guide",
+    },
+  },
+  en: {
+    common: {
+      save: "Save", cancel: "Cancel", logout: "Logout",
+      admin: "Admin", member: "Member", active: "Active", completed: "Completed",
+      waiting: "Waiting", won: "Won the fund", notGiven: "Not given", none: "-",
+      loading: "Loading...", sending: "Sending...", you: " (you)",
+      adminPick: "Admin pick", makeAdmin: "Make Admin", removeAdmin: "Remove Admin",
+      edit: "Edit", del: "Delete", approve: "Approve", reject: "Reject",
+      month: (n) => `Month ${n}`, genericError: "Something went wrong",
+    },
+    nav: { funds: "Funds", admin: "Admin", profile: "Profile" },
+    winnerModal: {
+      monthDraw: (n) => `Month ${n}'s draw is out`,
+      youWon: "Your name came up! 🏆",
+      othersPaid: "Everyone else has been sent your UPI/QR.",
+      sendToWinner: "Please send your installment to the winner.",
+      ok: "OK",
+    },
+    fundsTab: {
+      newFundHeading: "+ New chit fund", nameLabel: "Fund name",
+      namePlaceholder: "e.g. Trekizens Bachat Gat 2026",
+      instLabel: "Monthly installment (₹ per member)", instPlaceholder: "5000",
+      createBtn: "Create fund", yourFunds: "Your funds",
+      emptyTitle: "No funds yet",
+      emptyAdminSub: "Create your first chit fund using the form above.",
+      emptyMemberSub: "It will show up here once Admin creates a fund and adds you.",
+      perMonth: "/month", fillNameInst: "Fill in name and installment", created: "Fund created",
+    },
+    paymentProof: {
+      title: "🧾 Add a screenshot?",
+      desc: "Optional — helps avoid disputes. Only you, the winner, and Admin will see it.",
+      pick: "Choose screenshot 📎", pickAnother: "Choose another photo 📎",
+      compressing: "Compressing...", save: "Save",
+      skip: "Mark as paid without a screenshot", cancel: "‹ Cancel / Back",
+      photoFail: "Couldn't process the photo",
+    },
+    fundDetail: {
+      backAll: "‹ All funds",
+      perMemberMonth: (inst, months, rounds) => `₹${inst} / member / month · Duration: ${months} months · Rounds: ${rounds}`,
+      editFund: "✏️ Edit fund", deleteFund: "🗑 Delete fund",
+      addMemberHeading: "Add member", addToFund: "Add to fund",
+      shareSignup: "🔗 Share sign-up link",
+      membersHeading: (n) => `Members (${n})`,
+      noMembers: "No members yet",
+      noMembersAdminSub: "Add approved members to this fund from 'Add member' above.",
+      noMembersMemberSub: "Admin will add members.",
+      drawHeading: "🎟 This month's draw", drawBtn: "Draw lots",
+      manualDrawBtn: "🎯 Choose winner myself",
+      manualDrawSelectLabel: "Pick a winner from eligible members",
+      manualDrawNote: "This round will be clearly shown to everyone as an \"Admin pick\" in the Telegram message — it's not hidden like a random draw.",
+      manualDrawConfirmBtn: "Set this member as winner",
+      allWon: "Everyone has won the fund — the fund is complete",
+      undoDraw: (m) => `↩️ Undo last draw (month ${m})`,
+      collectionHeading: (m, paid, total) => `Month ${m} — collection (${paid}/${total})`,
+      overdueTag: "Overdue ⚠️", viewProofTitle: "View payment screenshot",
+      paidTag: "Paid ✓", unpaidTapTag: "Unpaid — tap here", unpaidTag: "Unpaid",
+      remindBtn: "⏰ Remind those unpaid", resendBtn: "🔁 Resend QR",
+      shareLedgerBtn: "📒 Share ledger on Telegram",
+      sendToWinnerHeading: "💳 Send money to the winner",
+      winnerLine: (name, amt) => `Winner: <b>${name}</b> — amount ₹${amt}`,
+      upiIdLabel: "UPI ID:", recordHeading: "Winners record",
+      recordLine: (m, name) => `Month ${m} — ${name}`,
+      collectedOf: (paid, total) => `Collected ${paid}/${total}`,
+      noDraws: "No draws yet",
+      noDrawsAdminSub: "Add members and press 'Draw lots'.",
+      noDrawsMemberSub: "The record will appear here once the first draw happens.",
+      completeFundBtn: "✅ Mark fund as complete",
+      noOneSelected: "No one selected",
+      memberAddedCatchUp: (n) => `Member added — the previous ${n} installments were recorded as catch-up dues`,
+      memberAdded: "Member added",
+      drawnToast: (name) => `Draw complete: ${name} — everyone notified on Telegram`,
+      noneAvailable: "No one available", selectMember: "Select a member",
+      manualConfirm: (name) => `Set "${name}" as this month's winner? Everyone will clearly see "Admin pick" on Telegram.`,
+      manualDrawnToast: (name) => `"${name}" set as winner — everyone notified on Telegram`,
+      undoConfirm: (m) => `Undo the month ${m} draw? The winner and that round's payment records will be erased.`,
+      undone: "Draw undone",
+      remindSent: (n) => `Reminder sent to ${n} people`,
+      remindPartial: (sent, fl) => `Sent to ${sent}, failed for ${fl.length} (${fl.join(', ')})`,
+      resendSent: (n) => `QR/UPI resent to ${n} people`,
+      resendPartial: (sent, fl) => `Sent to ${sent}, failed for ${fl}`,
+      shareLedgerConfirm: (m) => `Send month ${m}'s ledger to all fund members on Telegram?`,
+      shareLedgerSent: (n) => `Ledger sent to ${n} people`,
+      completeConfirm: "Mark this fund as complete and close it?",
+      completed: "Fund completed — you can start a new fund",
+      editHeading: "Edit fund", editNameLabel: "Fund name",
+      editInstLabel: "Monthly installment", editInstLocked: "(draws have started — can't change)",
+      fundUpdated: "Fund updated",
+      deleteConfirm1: (name) => `Permanently delete the entire fund "${name}"? All rounds and payment records will be erased. This cannot be undone.`,
+      deleteConfirm2: "Sure? Final confirmation.", fundDeleted: "Fund deleted",
+    },
+    shareLink: {
+      heading: "Share sign-up link", copyLink: "Copy link", shareBtn: "📤 Share",
+      copied: "Link copied",
+      shareText: (url) => `Sign up on Chit Fund Manager:\n${url}`,
+      shareTitle: "Chit Fund — Sign up",
+      copiedForShare: "Link copied — paste it on WhatsApp/Telegram",
+    },
+    adminTab: {
+      statsHeading: "📊 Overall summary",
+      overdueHeading: "⚠️ Overdue installments — all funds combined",
+      broadcastHeading: "📢 Message everyone",
+      broadcastDesc: "One Telegram message to all approved members.",
+      broadcastPlaceholder: "e.g. We'll do the draw this Sunday",
+      sendBtn: "Send", exportHeading: "📥 Data export",
+      exportDesc: "Download all funds, members and payments as a CSV file.",
+      exportBtn: "Download CSV", addMemberHeading: "+ Add member directly",
+      addMemberDesc: "Admin can add a member without signup. Notifications go out only if a Telegram ID is given.",
+      fullNameLabel: "Full name *", memberNamePlaceholder: "Member's name",
+      phoneLabel: "Mobile number", tidOptionalLabel: "Telegram ID",
+      tidOptionalTag: "(optional)", tidPlaceholder: "Enter digits if you have it",
+      pinOptionalLabel: "PIN", pinOptionalTag: "(optional — default 0000)",
+      pinPlaceholder: "4-6 digits", langLabel: "Language", addMemberBtn: "Add member",
+      pendingHeading: (n) => `Pending Sign-up Requests (${n})`,
+      noPending: "No pending requests",
+      noPendingSub: "New sign-ups will appear here for approval.",
+      approvedHeading: (n) => `All approved members (${n})`,
+      approvedToast: "Approved — Telegram notification sent",
+      rejectConfirm: "Reject this request?", rejected: "Rejected",
+      deleteMemberConfirm: (name) => `Permanently remove "${name}"? This cannot be undone.`,
+      memberDeleted: "Member removed",
+      makeAdminConfirm: (name) => `Make "${name}" an Admin?`,
+      removeAdminConfirm: (name) => `Remove "${name}"'s Admin rights?`,
+      roleChanged: "Done — Telegram notification sent",
+      nameRequired: "Enter a name",
+      memberAddedNoTelegram: "Member added (no Telegram — notifications won't be sent)",
+      memberAdded: "Member added",
+      totalFunds: "Total funds", totalFundsActive: (n) => `(${n} active)`,
+      totalMembers: "Total members", roundsHeld: "Draws held",
+      totalDisbursed: "Total disbursed", paymentCollection: "Payment collection",
+      noOverdue: "No one is overdue right now 🎉",
+      overdueHeadingCount: (n) => `⚠️ Overdue installments — all funds combined (${n})`,
+      overdueDue: (date, days) => `Due since ${date} — ${days} days overdue`,
+      writeMessage: "Write a message", broadcastConfirm: "Send this message to all members?",
+      broadcastSent: (n) => `Message sent to ${n} people`,
+      broadcastFailedHeading: (n) => `Failed to reach ${n} people:`,
+      exportDone: "Download started",
+    },
+    editMember: {
+      heading: (name) => `Edit member — ${name}`,
+      desc: "Make changes and press \"Save\". Leave PIN blank to keep it unchanged.",
+      fullNameLabel: "Full name", phoneLabel: "Mobile number", tidLabel: "Telegram ID",
+      tidPlaceholder: "Digits only — leave blank if none",
+      tidNote: "If Telegram ID is blank or incorrect, this member won't get bot notifications.",
+      langLabel: "Language", roleLabel: "Role", currentRole: "Currently: ",
+      newPinLabel: "New PIN (only if you want to change it)", newPinPlaceholder: "Blank = don't change",
+      saved: "Changes saved", nameRequired: "Name cannot be left blank",
+    },
+    profileTab: {
+      upiMissingWarning: "⚠️ Your UPI ID isn't filled in. It's required to take part in draws — fill it in below.",
+      phoneLabel: "Phone", tidLabel: "Telegram ID", upiLabel: "UPI ID",
+      langHeading: "Language",
+      langDesc: "Telegram notifications/messages will be sent in this language.",
+      langSaveBtn: "Save language",
+      langUpdated: "Language updated",
+      paymentInfoHeading: "Update payment info",
+      paymentInfoDesc: "Once your name is drawn, others will send payment to this UPI/QR.",
+      upiIdRequiredLabel: "UPI ID *", qrLabel: "UPI QR code", qrOptionalTag: "(optional)",
+      qrPick: "Choose QR file 📎", upiRequired: "Enter a UPI ID",
+      saving: "Saving...", saved: "Info saved",
+      guideBtn: "📘 User Guide",
+    },
+  },
+};
+function T(key) {
+  const val = key.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : undefined), UI_STRINGS[uiLang] || UI_STRINGS.mr);
+  return val !== undefined ? val : key;
+}
 
 const app = document.getElementById("app");
 
@@ -617,13 +1118,13 @@ function renderShell() {
           <span class="role-tag">${session.role === 'admin' ? 'ADMIN' : 'MEMBER'}</span>
         </div>
       </div>
-      <button id="logoutBtn">बाहेर पडा</button>
+      <button id="logoutBtn">${T('common.logout')}</button>
     </header>
     <main id="mainArea"></main>
     <nav class="bottomnav">
-      <button data-tab="funds" class="${currentTab==='funds'?'active':''}"><span class="ic">📒</span>फंड्स</button>
-      ${session.role==='admin' ? `<button data-tab="admin" class="${currentTab==='admin'?'active':''}"><span class="ic">🛡</span>Admin</button>` : ''}
-      <button data-tab="profile" class="${currentTab==='profile'?'active':''}"><span class="ic">👤</span>प्रोफाईल</button>
+      <button data-tab="funds" class="${currentTab==='funds'?'active':''}"><span class="ic">📒</span>${T('nav.funds')}</button>
+      ${session.role==='admin' ? `<button data-tab="admin" class="${currentTab==='admin'?'active':''}"><span class="ic">🛡</span>${T('nav.admin')}</button>` : ''}
+      <button data-tab="profile" class="${currentTab==='profile'?'active':''}"><span class="ic">👤</span>${T('nav.profile')}</button>
     </nav>`;
   document.getElementById("logoutBtn").onclick = logout;
   document.querySelectorAll(".bottomnav button").forEach(b => b.onclick = () => { currentTab = b.dataset.tab; currentFundId=null; renderShell(); });
@@ -659,11 +1160,11 @@ function showWinnerModal(a, onClose) {
     <div class="modal-card">
       <div class="party">🎉</div>
       <h2>${esc(a.fund_name)}</h2>
-      <p>महिना ${a.month_number} ची चिठ्ठी निघाली</p>
-      <div class="wname">${a.is_me ? 'तुमचं नाव निघालं! 🏆' : esc(a.winner_name)}</div>
+      <p>${T('winnerModal.monthDraw')(a.month_number)}</p>
+      <div class="wname">${a.is_me ? T('winnerModal.youWon') : esc(a.winner_name)}</div>
       <div class="amt-big">₹${Number(a.amount).toLocaleString('en-IN')}</div>
-      <p>${a.is_me ? 'बाकी सर्वांना तुमचा UPI/QR पाठवला गेला आहे.' : 'कृपया तुमचा हप्ता विजेत्याला पाठवा.'}</p>
-      <button class="btn" id="modalOk">ठीक आहे</button>
+      <p>${a.is_me ? T('winnerModal.othersPaid') : T('winnerModal.sendToWinner')}</p>
+      <button class="btn" id="modalOk">${T('winnerModal.ok')}</button>
     </div>`;
   document.body.appendChild(ov);
   const close = () => { ov.remove(); if (onClose) onClose(); };
@@ -681,26 +1182,26 @@ async function renderFundsTab() {
     if (session.role === "admin") {
       html += `
         <div class="card">
-          <h2>+ नवीन चिट फंड</h2>
-          <label>फंडचं नाव</label>
-          <input type="text" id="nfName" placeholder="उदा. Trekizens Bachat Gat 2026">
-          <label>मासिक हप्ता (₹ प्रत्येक मेंबरचा)</label>
-          <input type="number" id="nfInst" placeholder="5000">
-          <button class="btn" id="nfBtn">फंड तयार करा</button>
+          <h2>${T('fundsTab.newFundHeading')}</h2>
+          <label>${T('fundsTab.nameLabel')}</label>
+          <input type="text" id="nfName" placeholder="${T('fundsTab.namePlaceholder')}">
+          <label>${T('fundsTab.instLabel')}</label>
+          <input type="number" id="nfInst" placeholder="${T('fundsTab.instPlaceholder')}">
+          <button class="btn" id="nfBtn">${T('fundsTab.createBtn')}</button>
         </div>`;
     }
-    html += `<h3 class="section-h">तुमचे फंड्स</h3>`;
+    html += `<h3 class="section-h">${T('fundsTab.yourFunds')}</h3>`;
     if (!list.length) html += session.role === "admin"
-      ? emptyState("📒", "अजून एकही फंड नाही", "वर दिलेल्या फॉर्ममधून पहिला चिट फंड तयार करा.")
-      : emptyState("📒", "अजून एकही फंड नाही", "Admin ने फंड तयार करून तुम्हाला जोडलं की तो इथे दिसेल.");
+      ? emptyState("📒", T('fundsTab.emptyTitle'), T('fundsTab.emptyAdminSub'))
+      : emptyState("📒", T('fundsTab.emptyTitle'), T('fundsTab.emptyMemberSub'));
     else {
       html += `<div class="card">` + list.map(f => `
         <div class="list-item" style="cursor:pointer" data-fund="${f.id}">
           <div>
             <div class="who">${esc(f.name)}</div>
-            <div class="meta">₹${Number(f.installment).toLocaleString('en-IN')}/महिना</div>
+            <div class="meta">₹${Number(f.installment).toLocaleString('en-IN')}${T('fundsTab.perMonth')}</div>
           </div>
-          <span class="tag ${f.status}">${f.status==='active'?'चालू':'पूर्ण'}</span>
+          <span class="tag ${f.status}">${f.status==='active'?T('common.active'):T('common.completed')}</span>
         </div>`).join('') + `</div>`;
     }
     main.innerHTML = html;
@@ -708,8 +1209,8 @@ async function renderFundsTab() {
       document.getElementById("nfBtn").onclick = async () => {
         const name = document.getElementById("nfName").value.trim();
         const installment = parseFloat(document.getElementById("nfInst").value);
-        if (!name || !installment) return toast("नाव व हप्ता भरा");
-        try { await api("createFund", { profile_id: session.id, name, installment }); toast("फंड तयार झाला"); renderFundsTab(); }
+        if (!name || !installment) return toast(T('fundsTab.fillNameInst'));
+        try { await api("createFund", { profile_id: session.id, name, installment }); toast(T('fundsTab.created')); renderFundsTab(); }
         catch (e) { toast(e.message); }
       };
     }
@@ -723,14 +1224,14 @@ function openPaymentProofPrompt(round_id, target_profile_id, fundId) {
   ov.className = "modal-overlay";
   ov.innerHTML = `
     <div class="modal-card" style="text-align:left;">
-      <h2 style="text-align:center;">🧾 स्क्रीनशॉट जोडता का?</h2>
-      <p style="font-size:13px;color:var(--muted);text-align:center;">वादावाद टाळण्यासाठी — ऐच्छिक आहे. फक्त तुम्हाला, विजेत्याला, आणि Admin ला दिसेल.</p>
-      <div class="file-btn" id="ppPick" style="margin-top:10px;">स्क्रीनशॉट निवडा 📎</div>
+      <h2 style="text-align:center;">${T('paymentProof.title')}</h2>
+      <p style="font-size:13px;color:var(--muted);text-align:center;">${T('paymentProof.desc')}</p>
+      <div class="file-btn" id="ppPick" style="margin-top:10px;">${T('paymentProof.pick')}</div>
       <input type="file" id="ppFile" accept="image/*" style="display:none;">
       <img id="ppPrev" style="display:none;max-width:100%;border-radius:6px;margin-top:8px;">
-      <button class="btn" id="ppSave" style="margin-top:14px;">जतन करा</button>
-      <button class="btn secondary" id="ppSkip">स्क्रीनशॉटशिवाय भरला मार्क करा</button>
-      <button class="btn secondary" id="ppCancel">‹ रद्द करा / मागे</button>
+      <button class="btn" id="ppSave" style="margin-top:14px;">${T('paymentProof.save')}</button>
+      <button class="btn secondary" id="ppSkip">${T('paymentProof.skip')}</button>
+      <button class="btn secondary" id="ppCancel">${T('paymentProof.cancel')}</button>
     </div>`;
   document.body.appendChild(ov);
   let proofBase64 = null;
@@ -738,13 +1239,13 @@ function openPaymentProofPrompt(round_id, target_profile_id, fundId) {
   document.getElementById("ppPick").onclick = () => document.getElementById("ppFile").click();
   document.getElementById("ppFile").onchange = async (e) => {
     const f = e.target.files[0]; if (!f) return;
-    document.getElementById("ppPick").textContent = "कॉम्प्रेस होत आहे...";
+    document.getElementById("ppPick").textContent = T('paymentProof.compressing');
     try {
       proofBase64 = await compressImageToWebp(f);
       const img = document.getElementById("ppPrev");
       img.src = proofBase64; img.style.display = "block";
-      document.getElementById("ppPick").textContent = "वेगळा फोटो निवडा 📎";
-    } catch (e) { toast("फोटो प्रोसेस करता आला नाही"); document.getElementById("ppPick").textContent = "स्क्रीनशॉट निवडा 📎"; }
+      document.getElementById("ppPick").textContent = T('paymentProof.pickAnother');
+    } catch (e) { toast(T('paymentProof.photoFail')); document.getElementById("ppPick").textContent = T('paymentProof.pick'); }
   };
   const submit = async (withProof) => {
     try {
@@ -772,53 +1273,53 @@ async function renderFundDetail(fundId) {
     const appUrl = location.href.split('#')[0].split('?')[0];
 
     let html = `
-      <button class="link-btn" id="backBtn">‹ सर्व फंड्स</button>
+      <button class="link-btn" id="backBtn">${T('fundDetail.backAll')}</button>
       <div class="card">
-        <h2>${esc(fund.name)} <span class="tag ${fund.status}" style="margin-left:6px;">${fund.status==='active'?'चालू':'पूर्ण'}</span></h2>
-        <p class="desc">₹${Number(fund.installment).toLocaleString('en-IN')} / मेंबर / महिना · Duration: ${members.length} महिने · फेऱ्या: ${rounds.length}/${members.length||0}</p>
+        <h2>${esc(fund.name)} <span class="tag ${fund.status}" style="margin-left:6px;">${fund.status==='active'?T('common.active'):T('common.completed')}</span></h2>
+        <p class="desc">${T('fundDetail.perMemberMonth')(Number(fund.installment).toLocaleString('en-IN'), members.length, `${rounds.length}/${members.length||0}`)}</p>
         ${isAdmin ? `<div style="display:flex;gap:6px;margin-top:6px;">
-          <button class="small-btn secondary" id="editFundBtn">✏️ फंड Edit</button>
-          <button class="small-btn maroon" id="deleteFundBtn">🗑 फंड Delete</button>
+          <button class="small-btn secondary" id="editFundBtn">${T('fundDetail.editFund')}</button>
+          <button class="small-btn maroon" id="deleteFundBtn">${T('fundDetail.deleteFund')}</button>
         </div>` : ''}
       </div>`;
 
     if (isAdmin && fund.status === 'active') {
       html += `
         <div class="card">
-          <h2>मेंबर जोडा</h2>
+          <h2>${T('fundDetail.addMemberHeading')}</h2>
           <select id="addMemberSelect" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);"></select>
-          <button class="btn secondary" id="addMemberBtn">फंडमध्ये जोडा</button>
-          <button class="btn secondary" id="shareLinkBtn" style="margin-top:8px;">🔗 Sign-up लिंक शेअर करा</button>
+          <button class="btn secondary" id="addMemberBtn">${T('fundDetail.addToFund')}</button>
+          <button class="btn secondary" id="shareLinkBtn" style="margin-top:8px;">${T('fundDetail.shareSignup')}</button>
         </div>`;
     }
 
-    html += `<h3 class="section-h">मेंबर (${members.length})</h3><div class="card">`;
+    html += `<h3 class="section-h">${T('fundDetail.membersHeading')(members.length)}</h3><div class="card">`;
     html += members.length ? members.map(m => `
       <div class="list-item">
-        <div><div class="who">${esc(m.name)}${m.id===session.id?' (तुम्ही)':''}</div><div class="meta">${esc(m.phone)||''}</div></div>
-        <span class="tag ${wonIds.has(m.id)?'won':'wait'}">${wonIds.has(m.id)?'फंड मिळाला':'प्रतीक्षेत'}</span>
-      </div>`).join('') : emptyState("👥", "अजून मेंबर नाहीत", isAdmin ? "वर 'मेंबर जोडा' मधून approved मेंबर या फंडात जोडा." : "Admin मेंबर जोडतील.");
+        <div><div class="who">${esc(m.name)}${m.id===session.id?T('common.you'):''}</div><div class="meta">${esc(m.phone)||''}</div></div>
+        <span class="tag ${wonIds.has(m.id)?'won':'wait'}">${wonIds.has(m.id)?T('common.won'):T('common.waiting')}</span>
+      </div>`).join('') : emptyState("👥", T('fundDetail.noMembers'), isAdmin ? T('fundDetail.noMembersAdminSub') : T('fundDetail.noMembersMemberSub'));
     html += `</div>`;
 
     if (isAdmin && fund.status === 'active') {
       html += `
         <div class="card">
-          <h2>🎟 या महिन्याची चिठ्ठी</h2>
+          <h2>${T('fundDetail.drawHeading')}</h2>
           <div class="draw-stage" id="drawStage">
             <div class="matka"><svg viewBox="0 0 100 90"><path d="M20 30 Q10 60 30 80 Q50 92 70 80 Q90 60 80 30 Q75 15 50 12 Q25 15 20 30 Z" fill="#C68A2E" stroke="#8C2F39" stroke-width="3"/><ellipse cx="50" cy="14" rx="16" ry="6" fill="#EEE4C9" stroke="#8C2F39" stroke-width="2"/></svg></div>
             <div id="drawResult"></div>
-            <button class="btn maroon" id="drawBtn" ${eligible.length===0||members.length===0?'disabled':''}>चिठ्ठी काढा</button>
-            <button class="btn secondary" id="manualDrawBtn" style="margin-top:8px;" ${eligible.length===0||members.length===0?'disabled':''}>🎯 विजेता स्वतः निवडा</button>
+            <button class="btn maroon" id="drawBtn" ${eligible.length===0||members.length===0?'disabled':''}>${T('fundDetail.drawBtn')}</button>
+            <button class="btn secondary" id="manualDrawBtn" style="margin-top:8px;" ${eligible.length===0||members.length===0?'disabled':''}>${T('fundDetail.manualDrawBtn')}</button>
             <div id="manualDrawBox" style="display:none;width:100%;margin-top:10px;text-align:left;">
-              <label>Eligible मेंबरमधून विजेता निवडा</label>
+              <label>${T('fundDetail.manualDrawSelectLabel')}</label>
               <select id="manualDrawSelect" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
                 ${eligible.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}
               </select>
-              <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0;">ही फेरी "Admin निवड" म्हणून सर्वांना Telegram मेसेजमध्ये स्पष्ट दिसेल — random draw सारखी लपवलेली नाही.</p>
-              <button class="btn maroon" id="manualDrawConfirmBtn" style="margin-top:8px;">या मेंबरला विजेता ठरवा</button>
+              <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0;">${T('fundDetail.manualDrawNote')}</p>
+              <button class="btn maroon" id="manualDrawConfirmBtn" style="margin-top:8px;">${T('fundDetail.manualDrawConfirmBtn')}</button>
             </div>
-            ${eligible.length===0 && members.length>0 ? '<p style="font-size:12px;color:var(--muted);">सर्व मेंबरना फंड मिळाला — फंड पूर्ण झाला</p>' : ''}
-            ${rounds.length>0 ? `<button class="btn secondary" id="undoDrawBtn" style="margin-top:8px;">↩️ शेवटची चिठ्ठी रद्द करा (महिना ${lastRound.month_number})</button>` : ''}
+            ${eligible.length===0 && members.length>0 ? `<p style="font-size:12px;color:var(--muted);">${T('fundDetail.allWon')}</p>` : ''}
+            ${rounds.length>0 ? `<button class="btn secondary" id="undoDrawBtn" style="margin-top:8px;">${T('fundDetail.undoDraw')(lastRound.month_number)}</button>` : ''}
           </div>
         </div>`;
     }
@@ -827,7 +1328,7 @@ async function renderFundDetail(fundId) {
       const roundPayments = payments.filter(p => p.round_id === lastRound.id);
       const winner = members.find(m => m.id === lastRound.winner_profile_id);
       const paidCount = roundPayments.filter(p => p.paid).length;
-      html += `<h3 class="section-h">महिना ${lastRound.month_number}${lastRound.is_manual ? ' <span class="tag wait" style="font-size:9.5px;">Admin निवड</span>' : ''} — वसुली (${paidCount}/${members.length})</h3><div class="card">`;
+      html += `<h3 class="section-h">${T('fundDetail.collectionHeading')(lastRound.month_number, paidCount, members.length)}${lastRound.is_manual ? ` <span class="tag wait" style="font-size:9.5px;">${T('common.adminPick')}</span>` : ''}</h3><div class="card">`;
       html += members.map(m => {
         const p = roundPayments.find(x => x.profile_id === m.id);
         const paid = p ? p.paid : false;
@@ -835,48 +1336,48 @@ async function renderFundDetail(fundId) {
         const canToggle = isAdmin || m.id === session.id;
         return `<div class="list-item">
           <div><div class="who">${esc(m.name)}${m.id===lastRound.winner_profile_id?' 🏆':''}</div><div class="meta amt">₹${Number(fund.installment).toLocaleString('en-IN')}</div></div>
-          ${overdue ? `<span class="tag unpaid" style="margin-right:4px;">थकीत ⚠️</span>` : ''}
-          ${p && p.proof_url ? `<a href="${p.proof_url}" target="_blank" rel="noopener" style="margin-right:4px;font-size:16px;text-decoration:none;" title="पेमेंट स्क्रीनशॉट बघा">🧾</a>` : ''}
-          ${canToggle ? `<span class="tag ${paid?'paid':'unpaid'}" style="cursor:pointer" data-toggle-pay="${m.id}" data-round="${lastRound.id}" data-paid="${paid}">${paid?'भरला ✓':'बाकी — टॅप करा'}</span>`
-            : `<span class="tag ${paid?'paid':'unpaid'}">${paid?'भरला ✓':'बाकी'}</span>`}
+          ${overdue ? `<span class="tag unpaid" style="margin-right:4px;">${T('fundDetail.overdueTag')}</span>` : ''}
+          ${p && p.proof_url ? `<a href="${p.proof_url}" target="_blank" rel="noopener" style="margin-right:4px;font-size:16px;text-decoration:none;" title="${T('fundDetail.viewProofTitle')}">🧾</a>` : ''}
+          ${canToggle ? `<span class="tag ${paid?'paid':'unpaid'}" style="cursor:pointer" data-toggle-pay="${m.id}" data-round="${lastRound.id}" data-paid="${paid}">${paid?T('fundDetail.paidTag'):T('fundDetail.unpaidTapTag')}</span>`
+            : `<span class="tag ${paid?'paid':'unpaid'}">${paid?T('fundDetail.paidTag'):T('fundDetail.unpaidTag')}</span>`}
         </div>`;
       }).join('');
       if (isAdmin && paidCount < members.length) {
         html += `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <button class="btn maroon" id="remindBtn" style="margin-top:0;flex:1;">⏰ बाकी असलेल्यांना रिमाइंडर</button>
-          <button class="btn secondary" id="resendBtn" style="margin-top:0;flex:1;">🔁 QR पुन्हा पाठवा</button>
+          <button class="btn maroon" id="remindBtn" style="margin-top:0;flex:1;">${T('fundDetail.remindBtn')}</button>
+          <button class="btn secondary" id="resendBtn" style="margin-top:0;flex:1;">${T('fundDetail.resendBtn')}</button>
         </div>`;
       }
       if (isAdmin) {
-        html += `<button class="btn secondary" id="shareLedgerBtn" style="margin-top:8px;">📒 हिशोब Telegram वर शेअर करा</button>`;
+        html += `<button class="btn secondary" id="shareLedgerBtn" style="margin-top:8px;">${T('fundDetail.shareLedgerBtn')}</button>`;
       }
       html += `</div>`;
       if (winner && winner.id !== session.id) {
         html += `
           <div class="card">
-            <h2>💳 विजेत्याला पैसे पाठवा</h2>
-            <p class="desc">विजेता: <b>${esc(winner.name)}</b> — रक्कम ₹${Number(fund.installment).toLocaleString('en-IN')}</p>
+            <h2>${T('fundDetail.sendToWinnerHeading')}</h2>
+            <p class="desc">${T('fundDetail.winnerLine')(esc(winner.name), Number(fund.installment).toLocaleString('en-IN'))}</p>
             <div class="qr-share-box">
               ${winner.qr_url ? `<img src="${winner.qr_url}">` : ''}
-              <div style="font-size:13px;"><b>UPI ID:</b><br>${esc(winner.upi_id) || 'दिलेला नाही'}</div>
+              <div style="font-size:13px;"><b>${T('fundDetail.upiIdLabel')}</b><br>${esc(winner.upi_id) || T('common.notGiven')}</div>
             </div>
           </div>`;
       }
     }
 
-    html += `<h3 class="section-h">विजेत्यांची नोंद</h3><div class="card">`;
+    html += `<h3 class="section-h">${T('fundDetail.recordHeading')}</h3><div class="card">`;
     html += rounds.length ? rounds.map(r => {
       const w = members.find(m => m.id === r.winner_profile_id);
       const rp = payments.filter(p => p.round_id === r.id && p.paid).length;
       return `<div class="list-item">
-        <div><div class="who">महिना ${r.month_number} — ${w?esc(w.name):'—'}${r.is_manual ? ' <span class="tag wait" style="font-size:9px;">Admin निवड</span>' : ''}</div><div class="meta">वसूल ${rp}/${members.length}</div></div>
+        <div><div class="who">${T('fundDetail.recordLine')(r.month_number, w?esc(w.name):'—')}${r.is_manual ? ` <span class="tag wait" style="font-size:9px;">${T('common.adminPick')}</span>` : ''}</div><div class="meta">${T('fundDetail.collectedOf')(rp, members.length)}</div></div>
         <span class="amt">₹${Number(r.amount).toLocaleString('en-IN')}</span>
       </div>`;
-    }).join('') : emptyState("🎟", "अजून चिठ्ठी निघालेली नाही", isAdmin ? "मेंबर जोडून 'चिठ्ठी काढा' दाबा." : "पहिली चिठ्ठी निघाली की इथे नोंद दिसेल.");
+    }).join('') : emptyState("🎟", T('fundDetail.noDraws'), isAdmin ? T('fundDetail.noDrawsAdminSub') : T('fundDetail.noDrawsMemberSub'));
     html += `</div>`;
 
     if (isAdmin && fund.status === 'active' && eligible.length === 0 && members.length>0) {
-      html += `<button class="btn secondary" id="completeFundBtn">✅ फंड पूर्ण म्हणून बंद करा</button>`;
+      html += `<button class="btn secondary" id="completeFundBtn">${T('fundDetail.completeFundBtn')}</button>`;
     }
 
     main.innerHTML = html;
@@ -888,13 +1389,13 @@ async function renderFundDetail(fundId) {
         const memberIds = new Set(members.map(m => m.id));
         const avail = allProfiles.filter(p => !memberIds.has(p.id));
         const sel = document.getElementById("addMemberSelect");
-        sel.innerHTML = avail.length ? avail.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('') : `<option value="">कोणी उपलब्ध नाही</option>`;
+        sel.innerHTML = avail.length ? avail.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('') : `<option value="">${T('fundDetail.noneAvailable')}</option>`;
         document.getElementById("addMemberBtn").onclick = async () => {
           const target_id = sel.value;
-          if (!target_id) return toast("कोणी निवडलेलं नाही");
+          if (!target_id) return toast(T('fundDetail.noOneSelected'));
           try {
             const { catchUpRounds } = await api("addMemberToFund", { profile_id: session.id, fund_id: fundId, target_id });
-            toast(catchUpRounds > 0 ? `मेंबर जोडला — मागील ${catchUpRounds} हप्ते catch-up म्हणून बाकी नोंदवले` : "मेंबर जोडला");
+            toast(catchUpRounds > 0 ? T('fundDetail.memberAddedCatchUp')(catchUpRounds) : T('fundDetail.memberAdded'));
             renderFundDetail(fundId);
           }
           catch (e) { toast(e.message); }
@@ -911,7 +1412,7 @@ async function renderFundDetail(fundId) {
           await new Promise(r => setTimeout(r, 1300));
           const { winner } = await api("drawWinner", { profile_id: session.id, fund_id: fundId });
           stage.innerHTML = `<div class="winner-stamp">🎉 ${esc(winner.name)}</div>`;
-          toast(`चिठ्ठी निघाली: ${winner.name} — सर्वांना Telegram वर सूचना गेली`);
+          toast(T('fundDetail.drawnToast')(winner.name));
           setTimeout(() => renderFundDetail(fundId), 1600);
         } catch (e) { toast(e.message); drawBtn.disabled = false; stage.innerHTML=''; }
       };
@@ -924,27 +1425,27 @@ async function renderFundDetail(fundId) {
       const manualDrawConfirmBtn = document.getElementById("manualDrawConfirmBtn");
       if (manualDrawConfirmBtn) manualDrawConfirmBtn.onclick = async () => {
         const target_id = document.getElementById("manualDrawSelect").value;
-        if (!target_id) return toast("मेंबर निवडा");
+        if (!target_id) return toast(T('fundDetail.selectMember'));
         const pick = eligible.find(m => m.id === target_id);
-        if (!confirm(`"${pick?.name}" ला या महिन्याचा विजेता ठरवायचं? सर्वांना Telegram वर "Admin निवड" असं स्पष्ट कळेल.`)) return;
+        if (!confirm(T('fundDetail.manualConfirm')(pick?.name))) return;
         manualDrawConfirmBtn.disabled = true;
         try {
           const { winner } = await api("drawWinnerManual", { profile_id: session.id, fund_id: fundId, target_id });
-          toast(`"${winner.name}" ला विजेता ठरवलं — सर्वांना Telegram वर सूचना गेली`);
+          toast(T('fundDetail.manualDrawnToast')(winner.name));
           renderFundDetail(fundId);
         } catch (e) { toast(e.message); manualDrawConfirmBtn.disabled = false; }
       };
 
       const undoBtn = document.getElementById("undoDrawBtn");
       if (undoBtn) undoBtn.onclick = async () => {
-        if (!confirm(`महिना ${lastRound.month_number} ची चिठ्ठी रद्द करायची? विजेता व त्या फेरीचे पेमेंट रेकॉर्ड मिटतील.`)) return;
+        if (!confirm(T('fundDetail.undoConfirm')(lastRound.month_number))) return;
         try {
           const res = await api("undoLastDraw", { profile_id: session.id, fund_id: fundId });
           if (res.needsConfirm) {
             if (!confirm(res.error)) return;
             await api("undoLastDraw", { profile_id: session.id, fund_id: fundId, force: true });
           }
-          toast("चिठ्ठी रद्द झाली"); renderFundDetail(fundId);
+          toast(T('fundDetail.undone')); renderFundDetail(fundId);
         } catch (e) { toast(e.message); }
       };
     }
@@ -966,41 +1467,41 @@ async function renderFundDetail(fundId) {
 
     const remindBtn = document.getElementById("remindBtn");
     if (remindBtn && lastRound) remindBtn.onclick = async () => {
-      remindBtn.disabled = true; remindBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      remindBtn.disabled = true; remindBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
       try {
         const { sent, failed } = await api("remindUnpaid", { profile_id: session.id, round_id: lastRound.id });
-        toast(failed && failed.length ? `${sent} जणांना गेला, ${failed.length} जणांना गेला नाही (${failed.join(', ')})` : `${sent} जणांना रिमाइंडर गेला`);
+        toast(failed && failed.length ? T('fundDetail.remindPartial')(sent, failed) : T('fundDetail.remindSent')(sent));
       }
       catch (e) { toast(e.message); }
-      remindBtn.disabled = false; remindBtn.innerHTML = '⏰ बाकी असलेल्यांना रिमाइंडर';
+      remindBtn.disabled = false; remindBtn.innerHTML = T('fundDetail.remindBtn');
     };
     const resendBtn = document.getElementById("resendBtn");
     if (resendBtn && lastRound) resendBtn.onclick = async () => {
-      resendBtn.disabled = true; resendBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      resendBtn.disabled = true; resendBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
       try {
         const { sent, failed } = await api("resendWinnerInfo", { profile_id: session.id, round_id: lastRound.id });
-        toast(failed && failed.length ? `${sent} जणांना गेला, ${failed.length} जणांना गेला नाही` : `${sent} जणांना QR/UPI पुन्हा गेला`);
+        toast(failed && failed.length ? T('fundDetail.resendPartial')(sent, failed.length) : T('fundDetail.resendSent')(sent));
       }
       catch (e) { toast(e.message); }
-      resendBtn.disabled = false; resendBtn.innerHTML = '🔁 QR पुन्हा पाठवा';
+      resendBtn.disabled = false; resendBtn.innerHTML = T('fundDetail.resendBtn');
     };
     const shareLedgerBtn = document.getElementById("shareLedgerBtn");
     if (shareLedgerBtn && lastRound) shareLedgerBtn.onclick = async () => {
-      if (!confirm(`महिना ${lastRound.month_number} चा हिशोब सर्व फंड-मेंबरना Telegram वर पाठवायचा?`)) return;
-      shareLedgerBtn.disabled = true; shareLedgerBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      if (!confirm(T('fundDetail.shareLedgerConfirm')(lastRound.month_number))) return;
+      shareLedgerBtn.disabled = true; shareLedgerBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
       try {
         const { sent, failed } = await api("shareLedger", { profile_id: session.id, round_id: lastRound.id });
-        toast(failed && failed.length ? `${sent} जणांना गेला, ${failed.length} जणांना गेला नाही` : `${sent} जणांना हिशोब गेला`);
+        toast(failed && failed.length ? T('fundDetail.resendPartial')(sent, failed.length) : T('fundDetail.shareLedgerSent')(sent));
       }
       catch (e) { toast(e.message); }
-      shareLedgerBtn.disabled = false; shareLedgerBtn.innerHTML = '📒 हिशोब Telegram वर शेअर करा';
+      shareLedgerBtn.disabled = false; shareLedgerBtn.innerHTML = T('fundDetail.shareLedgerBtn');
     };
 
     const completeBtn = document.getElementById("completeFundBtn");
     if (completeBtn) completeBtn.onclick = async () => {
-      if (!confirm("हा फंड पूर्ण झाला म्हणून बंद करायचा?")) return;
+      if (!confirm(T('fundDetail.completeConfirm'))) return;
       await api("completeFund", { profile_id: session.id, fund_id: fundId });
-      toast("फंड पूर्ण झाला — नवीन फंड सुरू करू शकता");
+      toast(T('fundDetail.completed'));
       currentFundId = null; renderShell();
     };
 
@@ -1010,28 +1511,28 @@ async function renderFundDetail(fundId) {
       const box = document.createElement("div");
       box.className = "card";
       box.innerHTML = `
-        <h2>फंड संपादन</h2>
-        <label>फंडचं नाव</label>
+        <h2>${T('fundDetail.editHeading')}</h2>
+        <label>${T('fundDetail.editNameLabel')}</label>
         <input type="text" id="efName" value="${(fund.name||'').replace(/"/g,'&quot;')}">
-        <label>मासिक हप्ता ${canEditInst ? '' : '<span style="font-weight:400;color:var(--maroon);">(चिठ्ठी सुरू — बदलता येणार नाही)</span>'}</label>
+        <label>${T('fundDetail.editInstLabel')} ${canEditInst ? '' : `<span style="font-weight:400;color:var(--maroon);">${T('fundDetail.editInstLocked')}</span>`}</label>
         <input type="number" id="efInst" value="${fund.installment}" ${canEditInst?'':'disabled'}>
-        <button class="btn" id="efSave">जतन करा</button>
-        <button class="btn secondary" id="efCancel">रद्द करा</button>`;
+        <button class="btn" id="efSave">${T('common.save')}</button>
+        <button class="btn secondary" id="efCancel">${T('common.cancel')}</button>`;
       main.prepend(box); window.scrollTo(0,0);
       document.getElementById("efCancel").onclick = () => box.remove();
       document.getElementById("efSave").onclick = async () => {
         const payload = { profile_id: session.id, fund_id: fundId, name: document.getElementById("efName").value.trim() };
         if (canEditInst) payload.installment = parseFloat(document.getElementById("efInst").value);
-        try { await api("editFund", payload); toast("फंड अपडेट झाला"); renderFundDetail(fundId); }
+        try { await api("editFund", payload); toast(T('fundDetail.fundUpdated')); renderFundDetail(fundId); }
         catch (e) { toast(e.message); }
       };
     };
 
     const deleteFundBtn = document.getElementById("deleteFundBtn");
     if (deleteFundBtn) deleteFundBtn.onclick = async () => {
-      if (!confirm(`"${fund.name}" हा संपूर्ण फंड कायमचा काढायचा? सर्व फेऱ्या व पेमेंट रेकॉर्ड मिटतील. ही क्रिया परत करता येणार नाही.`)) return;
-      if (!confirm("पक्कं? शेवटची खात्री.")) return;
-      try { await api("deleteFund", { profile_id: session.id, fund_id: fundId }); toast("फंड काढला"); currentFundId = null; renderShell(); }
+      if (!confirm(T('fundDetail.deleteConfirm1')(fund.name))) return;
+      if (!confirm(T('fundDetail.deleteConfirm2'))) return;
+      try { await api("deleteFund", { profile_id: session.id, fund_id: fundId }); toast(T('fundDetail.fundDeleted')); currentFundId = null; renderShell(); }
       catch (e) { toast(e.message); }
     };
   } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
@@ -1043,21 +1544,21 @@ function openShareLink(url) {
   const box = document.createElement("div");
   box.className = "card";
   box.innerHTML = `
-    <h2>Sign-up लिंक शेअर करा</h2>
+    <h2>${T('shareLink.heading')}</h2>
     <div class="share-link-box">
       <img src="${qrImg}">
       <code>${url}</code>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-        <button class="small-btn" id="copyLinkBtn">लिंक कॉपी करा</button>
-        <button class="small-btn maroon" id="shareNativeBtn">📤 शेअर करा</button>
+        <button class="small-btn" id="copyLinkBtn">${T('shareLink.copyLink')}</button>
+        <button class="small-btn maroon" id="shareNativeBtn">${T('shareLink.shareBtn')}</button>
       </div>
     </div>`;
   main.prepend(box);
-  document.getElementById("copyLinkBtn").onclick = () => { navigator.clipboard.writeText(url); toast("लिंक कॉपी झाली"); };
+  document.getElementById("copyLinkBtn").onclick = () => { navigator.clipboard.writeText(url); toast(T('shareLink.copied')); };
   document.getElementById("shareNativeBtn").onclick = async () => {
-    const text = `चिट फंड मॅनेजरमध्ये Sign up करा:\n${url}`;
-    if (navigator.share) { try { await navigator.share({ title: "चिट फंड — Sign up", text, url }); } catch(e){} }
-    else { navigator.clipboard.writeText(text); toast("लिंक कॉपी झाली — WhatsApp/Telegram वर पेस्ट करा"); }
+    const text = T('shareLink.shareText')(url);
+    if (navigator.share) { try { await navigator.share({ title: T('shareLink.shareTitle'), text, url }); } catch(e){} }
+    else { navigator.clipboard.writeText(text); toast(T('shareLink.copiedForShare')); }
   };
 }
 
@@ -1072,78 +1573,78 @@ async function renderAdminTab() {
     ]);
     let html = `
       <div class="card" id="statsCard">
-        <h2>📊 एकत्रित आढावा</h2>
-        <p class="desc">लोड होत आहे...</p>
+        <h2>${T('adminTab.statsHeading')}</h2>
+        <p class="desc">${T('common.loading')}</p>
       </div>
       <div class="card" id="overdueCard">
-        <h2>⚠️ थकीत हप्ते — सर्व फंड एकत्र</h2>
-        <p class="desc">लोड होत आहे...</p>
+        <h2>${T('adminTab.overdueHeading')}</h2>
+        <p class="desc">${T('common.loading')}</p>
       </div>
       <div class="card">
-        <h2>📢 सर्वांना मेसेज पाठवा</h2>
-        <p class="desc">सर्व approved मेंबरना एकत्र Telegram मेसेज.</p>
-        <input type="text" id="bcText" placeholder="उदा. या रविवारी चिठ्ठी काढणार आहोत">
-        <button class="btn" id="bcBtn">पाठवा</button>
+        <h2>${T('adminTab.broadcastHeading')}</h2>
+        <p class="desc">${T('adminTab.broadcastDesc')}</p>
+        <input type="text" id="bcText" placeholder="${T('adminTab.broadcastPlaceholder')}">
+        <button class="btn" id="bcBtn">${T('adminTab.sendBtn')}</button>
         <div id="bcResult" style="margin-top:8px;"></div>
       </div>
       <div class="card">
-        <h2>📥 डेटा Export</h2>
-        <p class="desc">सर्व फंड, मेंबर, पेमेंट CSV फाईलमध्ये डाउनलोड करा.</p>
-        <button class="btn secondary" id="exportBtn">CSV डाउनलोड करा</button>
+        <h2>${T('adminTab.exportHeading')}</h2>
+        <p class="desc">${T('adminTab.exportDesc')}</p>
+        <button class="btn secondary" id="exportBtn">${T('adminTab.exportBtn')}</button>
       </div>
       <div class="card">
-        <h2>+ मेंबर थेट जोडा</h2>
-        <p class="desc">signup न करता Admin स्वतः मेंबर जोडू शकतो. Telegram ID दिला तरच त्याला सूचना जातील.</p>
-        <label>पूर्ण नाव *</label>
-        <input type="text" id="mmName" placeholder="मेंबरचं नाव">
-        <label>मोबाईल नंबर</label>
+        <h2>${T('adminTab.addMemberHeading')}</h2>
+        <p class="desc">${T('adminTab.addMemberDesc')}</p>
+        <label>${T('adminTab.fullNameLabel')}</label>
+        <input type="text" id="mmName" placeholder="${T('adminTab.memberNamePlaceholder')}">
+        <label>${T('adminTab.phoneLabel')}</label>
         <input type="tel" id="mmPhone" placeholder="9876543210">
         <label>UPI ID</label>
         <input type="text" id="mmUpi" placeholder="name@upi">
-        <label>Telegram ID <span style="font-weight:400;">(ऐच्छिक)</span></label>
-        <input type="text" id="mmTid" placeholder="असल्यास आकडे टाका" inputmode="numeric">
-        <label>PIN <span style="font-weight:400;">(ऐच्छिक — default 0000)</span></label>
-        <input type="password" id="mmPin" placeholder="4-6 अंकी" inputmode="numeric">
-        <label>भाषा / Language</label>
+        <label>${T('adminTab.tidOptionalLabel')} <span style="font-weight:400;">${T('adminTab.tidOptionalTag')}</span></label>
+        <input type="text" id="mmTid" placeholder="${T('adminTab.tidPlaceholder')}" inputmode="numeric">
+        <label>${T('adminTab.pinOptionalLabel')} <span style="font-weight:400;">${T('adminTab.pinOptionalTag')}</span></label>
+        <input type="password" id="mmPin" placeholder="${T('adminTab.pinPlaceholder')}" inputmode="numeric">
+        <label>${T('adminTab.langLabel')}</label>
         <select id="mmLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
           <option value="mr" selected>मराठी</option>
           <option value="hi">हिंदी</option>
           <option value="en">English</option>
         </select>
-        <button class="btn" id="mmBtn">मेंबर जोडा</button>
+        <button class="btn" id="mmBtn">${T('adminTab.addMemberBtn')}</button>
       </div>`;
 
-    html += `<h3 class="section-h">Pending Sign-up Requests (${pending.length})</h3><div class="card">`;
+    html += `<h3 class="section-h">${T('adminTab.pendingHeading')(pending.length)}</h3><div class="card">`;
     html += pending.length ? pending.map(p => `
       <div class="list-item">
         <div><div class="who">${esc(p.name)}</div><div class="meta">📞 ${esc(p.phone)||'-'} · TG: ${esc(p.telegram_id)}</div></div>
         <div style="display:flex;gap:6px;">
-          <button class="small-btn" data-approve="${p.id}">Approve</button>
-          <button class="small-btn maroon" data-reject="${p.id}">नकार</button>
+          <button class="small-btn" data-approve="${p.id}">${T('common.approve')}</button>
+          <button class="small-btn maroon" data-reject="${p.id}">${T('common.reject')}</button>
         </div>
-      </div>`).join('') : emptyState("✅", "कोणतीही request बाकी नाही", "नवीन signup आल्यावर तो इथे approve साठी दिसेल.");
+      </div>`).join('') : emptyState("✅", T('adminTab.noPending'), T('adminTab.noPendingSub'));
     html += `</div>`;
 
-    html += `<h3 class="section-h">सर्व Approved मेंबर (${approved.length})</h3><div class="card">`;
+    html += `<h3 class="section-h">${T('adminTab.approvedHeading')(approved.length)}</h3><div class="card">`;
     html += approved.map(p => `
       <div class="list-item">
         <div><div class="who">${esc(p.name)} ${p.role==='admin'?'👑':''}</div><div class="meta">📞 ${esc(p.phone)||'-'} · UPI: ${esc(p.upi_id)||'-'}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-          <button class="small-btn secondary" data-role="${p.id}" data-newrole="${p.role==='admin'?'member':'admin'}">${p.role==='admin'?'Admin काढा':'Admin बनवा'}</button>
-          <button class="small-btn secondary" data-edit="${p.id}">Edit</button>
-          ${p.id===session.id ? '' : `<button class="small-btn maroon" data-del="${p.id}">Delete</button>`}
+          <button class="small-btn secondary" data-role="${p.id}" data-newrole="${p.role==='admin'?'member':'admin'}">${p.role==='admin'?T('common.removeAdmin'):T('common.makeAdmin')}</button>
+          <button class="small-btn secondary" data-edit="${p.id}">${T('common.edit')}</button>
+          ${p.id===session.id ? '' : `<button class="small-btn maroon" data-del="${p.id}">${T('common.del')}</button>`}
         </div>
       </div>`).join('');
     html += `</div>`;
 
     main.innerHTML = html;
     main.querySelectorAll("[data-approve]").forEach(el => el.onclick = async () => {
-      try { await api("approve", { profile_id: session.id, target_id: el.dataset.approve }); toast("Approve केलं — Telegram वर सूचना गेली"); renderAdminTab(); }
+      try { await api("approve", { profile_id: session.id, target_id: el.dataset.approve }); toast(T('adminTab.approvedToast')); renderAdminTab(); }
       catch (e) { toast(e.message); }
     });
     main.querySelectorAll("[data-reject]").forEach(el => el.onclick = async () => {
-      if (!confirm("ही request नाकारायची?")) return;
-      try { await api("reject", { profile_id: session.id, target_id: el.dataset.reject }); toast("नाकारलं"); renderAdminTab(); }
+      if (!confirm(T('adminTab.rejectConfirm'))) return;
+      try { await api("reject", { profile_id: session.id, target_id: el.dataset.reject }); toast(T('adminTab.rejected')); renderAdminTab(); }
       catch (e) { toast(e.message); }
     });
     main.querySelectorAll("[data-edit]").forEach(el => el.onclick = () => {
@@ -1152,22 +1653,22 @@ async function renderAdminTab() {
     });
     main.querySelectorAll("[data-del]").forEach(el => el.onclick = async () => {
       const p = approved.find(x => x.id === el.dataset.del);
-      if (!confirm(`"${p?.name}" ला कायमचं काढून टाकायचं? ही क्रिया परत करता येणार नाही.`)) return;
-      try { await api("deleteMember", { profile_id: session.id, target_id: el.dataset.del }); toast("मेंबर काढला"); renderAdminTab(); }
+      if (!confirm(T('adminTab.deleteMemberConfirm')(p?.name))) return;
+      try { await api("deleteMember", { profile_id: session.id, target_id: el.dataset.del }); toast(T('adminTab.memberDeleted')); renderAdminTab(); }
       catch (e) { toast(e.message); }
     });
     main.querySelectorAll("[data-role]").forEach(el => el.onclick = async () => {
       const p = approved.find(x => x.id === el.dataset.role);
       const newRole = el.dataset.newrole;
-      const msg = newRole === 'admin' ? `"${p?.name}" ला Admin बनवायचं?` : `"${p?.name}" चे Admin अधिकार काढायचे?`;
+      const msg = newRole === 'admin' ? T('adminTab.makeAdminConfirm')(p?.name) : T('adminTab.removeAdminConfirm')(p?.name);
       if (!confirm(msg)) return;
-      try { await api("setRole", { profile_id: session.id, target_id: el.dataset.role, role: newRole }); toast("झालं — Telegram वर सूचना गेली"); renderAdminTab(); }
+      try { await api("setRole", { profile_id: session.id, target_id: el.dataset.role, role: newRole }); toast(T('adminTab.roleChanged')); renderAdminTab(); }
       catch (e) { toast(e.message); }
     });
     const mmBtn = document.getElementById("mmBtn");
     if (mmBtn) mmBtn.onclick = async () => {
       const name = document.getElementById("mmName").value.trim();
-      if (!name) return toast("नाव भरा");
+      if (!name) return toast(T('adminTab.nameRequired'));
       const payload = {
         profile_id: session.id, name,
         phone: document.getElementById("mmPhone").value.trim(),
@@ -1179,7 +1680,7 @@ async function renderAdminTab() {
       mmBtn.disabled = true;
       try {
         const { noTelegram } = await api("addManualMember", payload);
-        toast(noTelegram ? "मेंबर जोडला (Telegram नाही — सूचना जाणार नाहीत)" : "मेंबर जोडला");
+        toast(noTelegram ? T('adminTab.memberAddedNoTelegram') : T('adminTab.memberAdded'));
         renderAdminTab();
       } catch (e) { toast(e.message); mmBtn.disabled = false; }
     };
@@ -1190,12 +1691,12 @@ async function renderAdminTab() {
         const { stats } = await api("adminStats", { profile_id: session.id });
         const sc = document.getElementById("statsCard");
         if (sc) sc.innerHTML = `
-          <h2>📊 एकत्रित आढावा</h2>
-          <div class="list-item"><div class="who">एकूण फंड</div><div class="meta amt">${stats.totalFunds} (चालू ${stats.activeFunds})</div></div>
-          <div class="list-item"><div class="who">एकूण मेंबर</div><div class="meta amt">${stats.members}</div></div>
-          <div class="list-item"><div class="who">झालेल्या चिठ्ठ्या</div><div class="meta amt">${stats.rounds}</div></div>
-          <div class="list-item"><div class="who">एकूण वाटप</div><div class="meta amt">₹${Number(stats.totalDisbursed).toLocaleString('en-IN')}</div></div>
-          <div class="list-item"><div class="who">पेमेंट वसुली</div><div class="meta amt">${stats.paymentsPaid}/${stats.paymentsTotal}</div></div>`;
+          <h2>${T('adminTab.statsHeading')}</h2>
+          <div class="list-item"><div class="who">${T('adminTab.totalFunds')}</div><div class="meta amt">${stats.totalFunds} ${T('adminTab.totalFundsActive')(stats.activeFunds)}</div></div>
+          <div class="list-item"><div class="who">${T('adminTab.totalMembers')}</div><div class="meta amt">${stats.members}</div></div>
+          <div class="list-item"><div class="who">${T('adminTab.roundsHeld')}</div><div class="meta amt">${stats.rounds}</div></div>
+          <div class="list-item"><div class="who">${T('adminTab.totalDisbursed')}</div><div class="meta amt">₹${Number(stats.totalDisbursed).toLocaleString('en-IN')}</div></div>
+          <div class="list-item"><div class="who">${T('adminTab.paymentCollection')}</div><div class="meta amt">${stats.paymentsPaid}/${stats.paymentsTotal}</div></div>`;
       } catch (e) {}
     })();
 
@@ -1206,14 +1707,14 @@ async function renderAdminTab() {
         const oc = document.getElementById("overdueCard");
         if (!oc) return;
         if (!list.length) {
-          oc.innerHTML = `<h2>⚠️ थकीत हप्ते — सर्व फंड एकत्र</h2><p class="desc" style="margin:0;">सध्या कोणीही थकीत नाही 🎉</p>`;
+          oc.innerHTML = `<h2>${T('adminTab.overdueHeading')}</h2><p class="desc" style="margin:0;">${T('adminTab.noOverdue')}</p>`;
           return;
         }
-        oc.innerHTML = `<h2>⚠️ थकीत हप्ते — सर्व फंड एकत्र (${list.length})</h2>` + list.map(o => `
+        oc.innerHTML = `<h2>${T('adminTab.overdueHeadingCount')(list.length)}</h2>` + list.map(o => `
           <div class="list-item" style="cursor:pointer" data-overdue-fund="${o.fund_id}">
             <div>
               <div class="who">${esc(o.member_name)}${o.phone ? ' · 📞 ' + esc(o.phone) : ''}</div>
-              <div class="meta">${esc(o.fund_name)} — महिना ${o.month_number} · देय ${esc(o.due_date)} पासून ${o.days_overdue} दिवस थकीत</div>
+              <div class="meta">${esc(o.fund_name)} — ${T('common.month')(o.month_number)} · ${T('adminTab.overdueDue')(esc(o.due_date), o.days_overdue)}</div>
             </div>
             <span class="amt" style="color:var(--maroon);">₹${Number(o.amount).toLocaleString('en-IN')}</span>
           </div>`).join('');
@@ -1226,29 +1727,29 @@ async function renderAdminTab() {
     const bcBtn = document.getElementById("bcBtn");
     if (bcBtn) bcBtn.onclick = async () => {
       const text = document.getElementById("bcText").value.trim();
-      if (!text) return toast("मेसेज लिहा");
-      if (!confirm("सर्व मेंबरना हा मेसेज पाठवायचा?")) return;
-      bcBtn.disabled = true; bcBtn.innerHTML = '<span class="spinner"></span>पाठवत आहे...';
+      if (!text) return toast(T('adminTab.writeMessage'));
+      if (!confirm(T('adminTab.broadcastConfirm'))) return;
+      bcBtn.disabled = true; bcBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
       const bcResult = document.getElementById("bcResult");
       bcResult.innerHTML = "";
       try {
         const { sent, failed } = await api("broadcast", { profile_id: session.id, text });
-        toast(`${sent} जणांना मेसेज गेला`);
+        toast(T('adminTab.broadcastSent')(sent));
         document.getElementById("bcText").value = "";
         if (failed && failed.length) {
-          bcResult.innerHTML = `<div class="error-box">${failed.length} जणांना गेला नाही:<br>${failed.map(f => esc(f)).join('<br>')}</div>`;
+          bcResult.innerHTML = `<div class="error-box">${T('adminTab.broadcastFailedHeading')(failed.length)}<br>${failed.map(f => esc(f)).join('<br>')}</div>`;
         }
       }
       catch (e) { toast(e.message); }
-      bcBtn.disabled = false; bcBtn.textContent = "पाठवा";
+      bcBtn.disabled = false; bcBtn.textContent = T('adminTab.sendBtn');
     };
 
     const exportBtn = document.getElementById("exportBtn");
     if (exportBtn) exportBtn.onclick = async () => {
-      exportBtn.disabled = true; exportBtn.innerHTML = '<span class="spinner"></span>तयार करत आहे...';
-      try { const { data } = await api("exportData", { profile_id: session.id }); downloadCsvZip(data); toast("डाउनलोड सुरू"); }
+      exportBtn.disabled = true; exportBtn.innerHTML = '<span class="spinner"></span>' + T('common.loading');
+      try { const { data } = await api("exportData", { profile_id: session.id }); downloadCsvZip(data); toast(T('adminTab.exportDone')); }
       catch (e) { toast(e.message); }
-      exportBtn.disabled = false; exportBtn.textContent = "CSV डाउनलोड करा";
+      exportBtn.disabled = false; exportBtn.textContent = T('adminTab.exportBtn');
     };
   } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
 }
@@ -1259,42 +1760,42 @@ function openEditMember(p) {
   const box = document.createElement("div");
   box.className = "card";
   box.innerHTML = `
-    <h2>मेंबर संपादन — ${esc(p.name)}</h2>
-    <p class="desc">बदल करून "जतन करा" दाबा. PIN रिकामा ठेवला तर बदलणार नाही.</p>
-    <label>पूर्ण नाव</label>
+    <h2>${T('editMember.heading')(esc(p.name))}</h2>
+    <p class="desc">${T('editMember.desc')}</p>
+    <label>${T('editMember.fullNameLabel')}</label>
     <input type="text" id="emName" value="${(p.name||'').replace(/"/g,'&quot;')}">
-    <label>मोबाईल नंबर</label>
+    <label>${T('editMember.phoneLabel')}</label>
     <input type="tel" id="emPhone" value="${(p.phone||'').replace(/"/g,'&quot;')}">
     <label>UPI ID</label>
     <input type="text" id="emUpi" value="${(p.upi_id||'').replace(/"/g,'&quot;')}">
-    <label>Telegram ID</label>
-    <input type="text" id="emTid" inputmode="numeric" value="${p.telegram_id != null && p.telegram_id > 0 ? p.telegram_id : ''}" placeholder="फक्त आकडे — नसेल तर रिकामा">
-    <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">Telegram ID रिकामा किंवा चुकीचा असेल तर या मेंबरला बॉटवरून सूचना जाणार नाहीत.</p>
-    <label>भाषा / Language</label>
+    <label>${T('editMember.tidLabel')}</label>
+    <input type="text" id="emTid" inputmode="numeric" value="${p.telegram_id != null && p.telegram_id > 0 ? p.telegram_id : ''}" placeholder="${T('editMember.tidPlaceholder')}">
+    <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">${T('editMember.tidNote')}</p>
+    <label>${T('editMember.langLabel')}</label>
     <select id="emLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
       <option value="mr" ${(!p.preferred_language || p.preferred_language==='mr')?'selected':''}>मराठी</option>
       <option value="hi" ${p.preferred_language==='hi'?'selected':''}>हिंदी</option>
       <option value="en" ${p.preferred_language==='en'?'selected':''}>English</option>
     </select>
-    <label>Role</label>
+    <label>${T('editMember.roleLabel')}</label>
     <div class="list-item" style="padding:8px 0;">
-      <div class="who">सध्या: ${p.role === 'admin' ? '👑 Admin' : 'Member'}</div>
-      <button class="small-btn secondary" id="emRoleBtn">${p.role === 'admin' ? 'Admin काढा' : 'Admin बनवा'}</button>
+      <div class="who">${T('editMember.currentRole')}${p.role === 'admin' ? '👑 ' + T('common.admin') : T('common.member')}</div>
+      <button class="small-btn secondary" id="emRoleBtn">${p.role === 'admin' ? T('common.removeAdmin') : T('common.makeAdmin')}</button>
     </div>
-    <label>नवीन PIN (फक्त बदलायचा असेल तर)</label>
-    <input type="password" id="emPin" placeholder="रिकामा = बदलू नका" inputmode="numeric">
-    <button class="btn" id="emSave">जतन करा</button>
-    <button class="btn secondary" id="emCancel">रद्द करा</button>`;
+    <label>${T('editMember.newPinLabel')}</label>
+    <input type="password" id="emPin" placeholder="${T('editMember.newPinPlaceholder')}" inputmode="numeric">
+    <button class="btn" id="emSave">${T('common.save')}</button>
+    <button class="btn secondary" id="emCancel">${T('common.cancel')}</button>`;
   main.prepend(box);
   window.scrollTo(0, 0);
   document.getElementById("emCancel").onclick = () => box.remove();
   document.getElementById("emRoleBtn").onclick = async () => {
     const newRole = p.role === 'admin' ? 'member' : 'admin';
-    const msg = newRole === 'admin' ? `"${p.name}" ला Admin बनवायचं?` : `"${p.name}" चे Admin अधिकार काढायचे?`;
+    const msg = newRole === 'admin' ? T('adminTab.makeAdminConfirm')(p.name) : T('adminTab.removeAdminConfirm')(p.name);
     if (!confirm(msg)) return;
     try {
       await api("setRole", { profile_id: session.id, target_id: p.id, role: newRole });
-      toast("झालं — Telegram वर सूचना गेली");
+      toast(T('adminTab.roleChanged'));
       box.remove();
       renderAdminTab();
     } catch (e) { toast(e.message); }
@@ -1311,8 +1812,8 @@ function openEditMember(p) {
     };
     const pin = document.getElementById("emPin").value.trim();
     if (pin) payload.pin = pin;
-    if (!payload.name) return toast("नाव रिकामं ठेवता येणार नाही");
-    try { await api("editMember", payload); toast("बदल जतन झाले"); renderAdminTab(); }
+    if (!payload.name) return toast(T('editMember.nameRequired'));
+    try { await api("editMember", payload); toast(T('editMember.saved')); renderAdminTab(); }
     catch (e) { toast(e.message); }
   };
 }
@@ -1342,40 +1843,40 @@ function renderProfileTab() {
   const main = document.getElementById("mainArea");
   const hasUpi = session.upi_id && session.upi_id.trim() !== "";
   main.innerHTML = `
-    ${!hasUpi ? `<div class="error-box">⚠️ तुमचा UPI ID भरलेला नाही. चिठ्ठीत भाग घेण्यासाठी तो आवश्यक आहे — खाली भरा.</div>` : ''}
+    ${!hasUpi ? `<div class="error-box">${T('profileTab.upiMissingWarning')}</div>` : ''}
     <div class="card">
       <h2>${esc(session.name)}</h2>
-      <p class="desc">${session.role === 'admin' ? '👑 Admin' : 'Member'}</p>
-      <div class="list-item"><div class="who">फोन</div><div class="meta">${esc(session.phone)||'-'}</div></div>
-      <div class="list-item"><div class="who">Telegram ID</div><div class="meta">${esc(session.telegram_id)}</div></div>
-      <div class="list-item"><div class="who">UPI ID</div><div class="meta">${esc(session.upi_id)||'-'}</div></div>
+      <p class="desc">${session.role === 'admin' ? '👑 ' + T('common.admin') : T('common.member')}</p>
+      <div class="list-item"><div class="who">${T('profileTab.phoneLabel')}</div><div class="meta">${esc(session.phone)||'-'}</div></div>
+      <div class="list-item"><div class="who">${T('profileTab.tidLabel')}</div><div class="meta">${esc(session.telegram_id)}</div></div>
+      <div class="list-item"><div class="who">${T('profileTab.upiLabel')}</div><div class="meta">${esc(session.upi_id)||'-'}</div></div>
       ${session.qr_url ? `<img src="${session.qr_url}" class="qr-preview" style="display:block;margin-top:10px;">` : ''}
     </div>
     <div class="card">
-      <h2>भाषा / Language</h2>
-      <p class="desc">Telegram सूचना/मेसेज याच भाषेत जातील. / Telegram notifications will be sent in this language.</p>
+      <h2>${T('profileTab.langHeading')}</h2>
+      <p class="desc">${T('profileTab.langDesc')}</p>
       <select id="prLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
         <option value="mr" ${session.preferred_language==='mr'||!session.preferred_language?'selected':''}>मराठी</option>
         <option value="hi" ${session.preferred_language==='hi'?'selected':''}>हिंदी</option>
         <option value="en" ${session.preferred_language==='en'?'selected':''}>English</option>
       </select>
-      <button class="btn secondary" id="prLangSave" style="margin-top:10px;">भाषा जतन करा / Save language</button>
+      <button class="btn secondary" id="prLangSave" style="margin-top:10px;">${T('profileTab.langSaveBtn')}</button>
     </div>
     <div class="card">
-      <h2>पेमेंट माहिती अपडेट करा</h2>
-      <p class="desc">तुमचं नाव निघाल्यावर बाकीचे इथल्या UPI/QR वर पैसे पाठवतील.</p>
-      <label>UPI ID *</label>
+      <h2>${T('profileTab.paymentInfoHeading')}</h2>
+      <p class="desc">${T('profileTab.paymentInfoDesc')}</p>
+      <label>${T('profileTab.upiIdRequiredLabel')}</label>
       <input type="text" id="prUpi" value="${(session.upi_id||'').replace(/"/g,'&quot;')}" placeholder="yourname@upi">
-      <label>UPI QR कोड <span style="font-weight:400;">(ऐच्छिक)</span></label>
-      <div class="file-btn" id="prQrPick">QR फाईल निवडा 📎</div>
+      <label>${T('profileTab.qrLabel')} <span style="font-weight:400;">${T('profileTab.qrOptionalTag')}</span></label>
+      <div class="file-btn" id="prQrPick">${T('profileTab.qrPick')}</div>
       <input type="file" id="prQr" accept="image/*" style="display:none;">
       <img id="prQrPrev" class="qr-preview" style="display:none;">
-      <label>फोन</label>
+      <label>${T('profileTab.phoneLabel')}</label>
       <input type="tel" id="prPhone" value="${(session.phone||'').replace(/"/g,'&quot;')}" placeholder="9876543210">
-      <button class="btn" id="prSave">जतन करा</button>
+      <button class="btn" id="prSave">${T('common.save')}</button>
     </div>
-    <button class="btn secondary" id="guideBtn">📘 वापर मार्गदर्शक / User Guide</button>
-    <button class="btn secondary" id="pLogout">Logout</button>`;
+    <button class="btn secondary" id="guideBtn">${T('profileTab.guideBtn')}</button>
+    <button class="btn secondary" id="pLogout">${T('common.logout')}</button>`;
 
   document.getElementById("prLangSave").onclick = async () => {
     const preferred_language = document.getElementById("prLang").value;
@@ -1384,7 +1885,8 @@ function renderProfileTab() {
     try {
       const { profile } = await api("updateProfile", { profile_id: session.id, preferred_language });
       setSession(profile);
-      toast("भाषा बदलली / Language updated");
+      toast(T('profileTab.langUpdated'));
+      renderShell();
     } catch (e) { toast(e.message); }
     btn.disabled = false;
   };
@@ -1399,15 +1901,15 @@ function renderProfileTab() {
   document.getElementById("prSave").onclick = async () => {
     const upi_id = document.getElementById("prUpi").value.trim();
     const phone = document.getElementById("prPhone").value.trim();
-    if (!upi_id) return toast("UPI ID भरा");
+    if (!upi_id) return toast(T('profileTab.upiRequired'));
     const btn = document.getElementById("prSave");
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>जतन होत आहे...';
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>' + T('profileTab.saving');
     try {
       const { profile } = await api("updateProfile", { profile_id: session.id, upi_id, phone, qr_base64: prQrBase64 });
       setSession(profile);
-      toast("माहिती जतन झाली");
+      toast(T('profileTab.saved'));
       renderProfileTab();
-    } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = "जतन करा"; }
+    } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = T('common.save'); }
   };
   document.getElementById("pLogout").onclick = logout;
   document.getElementById("guideBtn").onclick = () => renderGuide();

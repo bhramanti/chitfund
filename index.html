@@ -346,6 +346,34 @@ function fileToBase64(file) {
   });
 }
 
+// पेमेंट-स्क्रीनशॉट अपलोड करण्याआधी कॉम्प्रेस करून WebP मध्ये बदलतो (आकार लहान रहावा म्हणून).
+// जुन्या Safari/iPhone browsers WebP encode करू शकत नाहीत — अशा वेळी आपोआप JPEG वर पडतो (compressed राहतंच).
+function compressImageToWebp(file, maxDim = 1280, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const scale = maxDim / Math.max(width, height);
+          width = Math.round(width * scale); height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        let out = canvas.toDataURL("image/webp", quality);
+        if (!out.startsWith("data:image/webp")) out = canvas.toDataURL("image/jpeg", quality); // fallback
+        resolve(out);
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ---------------- सुरक्षा: HTML-escape ---------------- */
 // नाव/फोन/UPI/मेसेज सारखा युजर-input डेटा innerHTML मध्ये टाकण्याआधी नेहमी escape करा —
 // नाहीतर कोणीही signup करताना नावात <script> टाकून दुसऱ्या युजरच्या (उदा. Admin च्या) browser मध्ये
@@ -689,6 +717,48 @@ async function renderFundsTab() {
   } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
 }
 
+/* ---------------- पेमेंट स्क्रीनशॉट (ऐच्छिक) ---------------- */
+function openPaymentProofPrompt(round_id, target_profile_id, fundId) {
+  const ov = document.createElement("div");
+  ov.className = "modal-overlay";
+  ov.innerHTML = `
+    <div class="modal-card" style="text-align:left;">
+      <h2 style="text-align:center;">🧾 स्क्रीनशॉट जोडता का?</h2>
+      <p style="font-size:13px;color:var(--muted);text-align:center;">वादावाद टाळण्यासाठी — ऐच्छिक आहे. फक्त तुम्हाला, विजेत्याला, आणि Admin ला दिसेल.</p>
+      <div class="file-btn" id="ppPick" style="margin-top:10px;">स्क्रीनशॉट निवडा 📎</div>
+      <input type="file" id="ppFile" accept="image/*" style="display:none;">
+      <img id="ppPrev" style="display:none;max-width:100%;border-radius:6px;margin-top:8px;">
+      <button class="btn" id="ppSave" style="margin-top:14px;">जतन करा</button>
+      <button class="btn secondary" id="ppSkip">स्क्रीनशॉटशिवाय भरला मार्क करा</button>
+      <button class="btn secondary" id="ppCancel">‹ रद्द करा / मागे</button>
+    </div>`;
+  document.body.appendChild(ov);
+  let proofBase64 = null;
+  const close = () => ov.remove();
+  document.getElementById("ppPick").onclick = () => document.getElementById("ppFile").click();
+  document.getElementById("ppFile").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    document.getElementById("ppPick").textContent = "कॉम्प्रेस होत आहे...";
+    try {
+      proofBase64 = await compressImageToWebp(f);
+      const img = document.getElementById("ppPrev");
+      img.src = proofBase64; img.style.display = "block";
+      document.getElementById("ppPick").textContent = "वेगळा फोटो निवडा 📎";
+    } catch (e) { toast("फोटो प्रोसेस करता आला नाही"); document.getElementById("ppPick").textContent = "स्क्रीनशॉट निवडा 📎"; }
+  };
+  const submit = async (withProof) => {
+    try {
+      await api("markPayment", { profile_id: session.id, round_id, target_profile_id, paid: true, proof_base64: withProof ? proofBase64 : null });
+      close();
+      renderFundDetail(fundId);
+    } catch (e) { toast(e.message); }
+  };
+  document.getElementById("ppSave").onclick = () => submit(!!proofBase64);
+  document.getElementById("ppSkip").onclick = () => submit(false);
+  document.getElementById("ppCancel").onclick = close;
+  ov.onclick = (e) => { if (e.target === ov) close(); };
+}
+
 /* ---------------- FUND DETAIL ---------------- */
 async function renderFundDetail(fundId) {
   const main = document.getElementById("mainArea");
@@ -766,6 +836,7 @@ async function renderFundDetail(fundId) {
         return `<div class="list-item">
           <div><div class="who">${esc(m.name)}${m.id===lastRound.winner_profile_id?' 🏆':''}</div><div class="meta amt">₹${Number(fund.installment).toLocaleString('en-IN')}</div></div>
           ${overdue ? `<span class="tag unpaid" style="margin-right:4px;">थकीत ⚠️</span>` : ''}
+          ${p && p.proof_url ? `<a href="${p.proof_url}" target="_blank" rel="noopener" style="margin-right:4px;font-size:16px;text-decoration:none;" title="पेमेंट स्क्रीनशॉट बघा">🧾</a>` : ''}
           ${canToggle ? `<span class="tag ${paid?'paid':'unpaid'}" style="cursor:pointer" data-toggle-pay="${m.id}" data-round="${lastRound.id}" data-paid="${paid}">${paid?'भरला ✓':'बाकी — टॅप करा'}</span>`
             : `<span class="tag ${paid?'paid':'unpaid'}">${paid?'भरला ✓':'बाकी'}</span>`}
         </div>`;
@@ -883,6 +954,11 @@ async function renderFundDetail(fundId) {
         const target_profile_id = el.dataset.togglePay;
         const round_id = el.dataset.round;
         const paid = el.dataset.paid !== "true";
+        // स्वतःचं पेमेंट "भरला" करताना — वादावाद टाळण्यासाठी स्क्रीनशॉट जोडायला (ऐच्छिक) विचारतो
+        if (paid && target_profile_id === session.id) {
+          openPaymentProofPrompt(round_id, target_profile_id, fundId);
+          return;
+        }
         try { await api("markPayment", { profile_id: session.id, round_id, target_profile_id, paid }); renderFundDetail(fundId); }
         catch (e) { toast(e.message); }
       };
@@ -1340,63 +1416,104 @@ function renderProfileTab() {
 /* ============================================================
    वापर मार्गदर्शक / USER GUIDE — प्रत्येक section चं A-to-Z स्पष्टीकरण, मराठी + English
    ============================================================ */
+// for: "all" (सर्व users) किंवा "admin" (फक्त Admin ला दिसणारं) — role नुसार यादी वेगळी दिसते.
 const GUIDE_SECTIONS = [
-  { icon: "🔐", mr_t: "लॉगिन आणि Sign up", en_t: "Login & Sign up",
-    mr: "नवीन असाल तर 'नवीन Sign up' टॅबवर जा — नाव, फोन, Telegram User ID (हा @userinfobot कडून मिळतो, फॉर्ममध्ये लिंक दिलेली आहे), आणि 4-6 अंकी PIN भरा. Sign up आधी @chitfindbot ला Telegram वर /start पाठवणं आवश्यक आहे — नाहीतर तुम्हाला कुठलीही सूचना मिळणार नाही. पहिला व्यक्ती जो signup करतो तो आपोआप Admin बनतो; त्यानंतरचे सगळे 'pending' राहतात जोपर्यंत Admin त्यांना Approve करत नाही. लॉगिन करताना 'मला लक्षात ठेवा' टिक केलं तर पुढच्या वेळी ID+PIN आपोआप भरलेले दिसतील (फक्त स्वतःच्या फोनवर वापरा).",
-    en: "New users go to the 'नवीन Sign up' tab — fill in name, phone, Telegram User ID (get it from @userinfobot, link is in the form), and a 4-6 digit PIN. You must send /start to @chitfindbot on Telegram before signing up, otherwise you won't receive any notifications. The very first person to sign up automatically becomes Admin; everyone after that stays 'pending' until Admin approves them. Ticking 'मला लक्षात ठेवा' on login saves your ID+PIN on that phone for next time (only use on your own phone)." },
-  { icon: "📒", mr_t: "फंड्स टॅब", en_t: "Funds tab",
-    mr: "इथे तुम्ही ज्या चिट फंडांचे मेंबर आहात ते सगळे दिसतात. Admin असाल तर वर 'नवीन फंड' बनवण्याचा फॉर्म दिसेल — नाव आणि मासिक हप्ता भरून फंड तयार करा. कुठल्याही फंडावर टॅप केलं की त्याचं आतलं पान उघडतं.",
-    en: "Shows every chit fund you're a member of. If you're Admin, a 'new fund' form appears at the top — enter a name and monthly installment to create one. Tap any fund to open its detail page." },
-  { icon: "🎟", mr_t: "फंडाच्या आत — मेंबर आणि चिठ्ठी", en_t: "Inside a fund — members & the draw",
-    mr: "Admin इथून approved मेंबरना फंडात जोडतो (ड्रॉपडाउनमधून निवडून 'फंडमध्ये जोडा'). प्रत्येक महिन्याला 'चिठ्ठी काढा' दाबल्यावर, अजून फंड न मिळालेल्या मेंबरमधून एक random विजेता निवडला जातो — पण आधी सगळ्यांचा UPI ID भरलेला असणं आवश्यक आहे. 'विजेता स्वतः निवडा' वापरून Admin स्वतः ठरवूही शकतो — अशी फेरी 'Admin निवड' असं लेबल लावून सर्वांना Telegram वर स्पष्ट कळवली जाते, लपवलेली नाही. चूक झाली तर 'शेवटची चिठ्ठी रद्द करा' ने ती फेरी उलटवता येते (कोणी पैसे भरले असतील तर अधिक खात्री विचारते).",
-    en: "Admin adds approved members to the fund here (pick from dropdown, tap 'फंडमध्ये जोडा'). Each month, tapping 'चिठ्ठी काढा' picks a random winner from members who haven't won yet — everyone's UPI ID must be filled first. 'विजेता स्वतः निवडा' lets Admin pick the winner manually instead — that round is clearly labeled 'Admin निवड' and the Telegram message to everyone says so too, nothing is hidden. Made a mistake? 'शेवटची चिठ्ठी रद्द करा' undoes the last round (asks for extra confirmation if anyone already paid)." },
-  { icon: "💳", mr_t: "पेमेंट, थकीत आणि रिमाइंडर", en_t: "Payments, overdue & reminders",
-    mr: "चिठ्ठी निघाल्यावर प्रत्येक मेंबरच्या नावासमोर 'भरला/बाकी' टॅग दिसतो — स्वतःचं किंवा (Admin असल्यास) कोणाचंही टॅप करून बदलता येतं. चिठ्ठी निघाल्याच्या तारखेनंतरही कोणी भरलं नसेल तर त्याच्यासमोर 'थकीत ⚠️' दिसतं. Admin टॅबवर 'थकीत हप्ते — सर्व फंड एकत्र' मध्ये सगळ्या फंडांमधलं थकीत एका जागी दिसतं. न भरलेल्यांना 'बाकी असलेल्यांना रिमाइंडर' बटणाने Telegram मेसेज जातो; तो कोणाकोणाला गेला नाही (उदा. त्याने बॉटला /start केलेलं नाही) ते पण दिसतं.",
-    en: "Once a round is drawn, each member shows a 'paid/pending' tag — tap your own (or anyone's, if you're Admin) to toggle it. If it's still unpaid after the draw date, it shows 'थकीत ⚠️' (overdue). The Admin tab's 'थकीत हप्ते — सर्व फंड एकत्र' card lists all overdue payments across every fund in one place. 'बाकी असलेल्यांना रिमाइंडर' sends a Telegram nudge to everyone who hasn't paid; it also shows who it failed to reach (usually because they haven't /start'd the bot)." },
-  { icon: "📢", mr_t: "हिशोब शेअर व QR/UPI पुन्हा पाठवणे", en_t: "Sharing the ledger & resending QR/UPI",
-    mr: "'हिशोब Telegram वर शेअर करा' दाबलं की त्या फेरीचा हिशोब (कोण भरलं/बाकी, रक्कम) साध्या टेक्स्ट मेसेजने सगळ्या फंड-मेंबरना जातो. 'QR पुन्हा पाठवा' विजेत्याचा UPI/QR परत सगळ्यांना पाठवतं — कोणाचा फोटो/मेसेज हरवला असेल तर उपयोगी.",
-    en: "'हिशोब Telegram वर शेअर करा' sends that round's ledger (who paid, who's pending, amounts) as a plain text message to every fund member. 'QR पुन्हा पाठवा' resends the winner's UPI/QR to everyone — handy if someone lost the earlier message." },
-  { icon: "🛡", mr_t: "Admin टॅब — Approvals आणि मेंबर", en_t: "Admin tab — approvals & members",
-    mr: "'Pending Sign-up Requests' मध्ये नवीन signup approve/नकार करता येतो. 'सर्व Approved मेंबर' मध्ये प्रत्येकासमोर Admin बनवा/काढा, Edit, आणि Delete बटणं आहेत. Edit उघडल्यावर नाव, फोन, UPI, Telegram ID, आणि नवीन PIN बदलता येतो — तिथेच Role टॉगलही आहे. Delete फक्त तेव्हाच चालतं जेव्हा तो मेंबर कुठल्याही चिठ्ठी-सुरू-झालेल्या फंडात नसतो. 'मेंबर थेट जोडा' ने Admin signup न होता स्वतः नवीन मेंबर बनवू शकतो (Telegram ID दिला नाही तर त्याला सूचना जाणार नाहीत).",
-    en: "'Pending Sign-up Requests' lets you approve/reject new signups. 'सर्व Approved मेंबर' lists everyone with Admin बनवा/काढा, Edit, and Delete buttons. Opening Edit lets you change name, phone, UPI, Telegram ID, and reset PIN — the role toggle is there too. Delete only works if that member isn't in any fund where the draw has already started. 'मेंबर थेट जोडा' lets Admin create a member without them signing up (skip Telegram ID and they simply won't get notifications)." },
-  { icon: "📊", mr_t: "Admin टॅब — आढावा, Broadcast, Export", en_t: "Admin tab — overview, broadcast, export",
-    mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं (एकूण फंड, मेंबर, वाटप, वसुली). 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना एकत्र Telegram मेसेज पाठवतं — कोणाला गेला नाही ते बटणाखाली लाल पट्टीत दिसेल. 'CSV डाउनलोड करा' सगळा डेटा (profiles, funds, payments इ.) एका फाईलमध्ये देतं — बॅकअप किंवा हिशोबासाठी.",
-    en: "'एकत्रित आढावा' shows totals across all funds (funds, members, disbursed, collections). 'सर्वांना मेसेज पाठवा' sends one Telegram message to every approved member — anyone it failed to reach shows in a red box under the button. 'CSV डाउनलोड करा' exports all data (profiles, funds, payments, etc.) into one file — useful for backups or record-keeping." },
-  { icon: "👤", mr_t: "प्रोफाईल", en_t: "Profile",
-    mr: "इथे स्वतःचा फोन, UPI ID, आणि QR कोड भरायचा/बदलायचा असतो. UPI ID भरलेला नसेल तर चिठ्ठीत भाग घेता येत नाही — draw अडतो. QR फाईल टाकली तर बाकी मेंबरना ती फोटोसह Telegram वर मिळते.",
-    en: "Set or update your own phone, UPI ID, and QR code here. Without a UPI ID you can't take part in the draw — it will block until it's filled in. If you upload a QR image, other members receive it as a photo on Telegram." },
-  { icon: "📲", mr_t: "अ‍ॅप होम स्क्रीनवर install करणं (PWA)", en_t: "Installing the app on your home screen (PWA)",
-    mr: "Android वर आपोआप 'install' पट्टी दिसते. iPhone वर Safari मध्ये उघडून खालचं Share बटण → 'Add to Home Screen' निवडा. एकदा install केलं की आयकॉनवरून थेट उघडता येतं, browser address bar न दिसता.",
-    en: "On Android an install banner appears automatically. On iPhone, open in Safari, tap the Share button, then 'Add to Home Screen'. Once installed, it opens directly from the icon without a browser address bar." },
-  { icon: "🛠", mr_t: "समस्या आल्यास", en_t: "Troubleshooting",
-    mr: "Telegram मेसेज येत नाही? आधी बॉटला /start केलंय का ते तपासा. Draw अडतो? कोणाचा UPI ID रिकामा आहे ते बघा (नाव दिसेल). काहीतरी अडकलं? Logout करून पुन्हा Login करा — यामुळे डेटाबेसमधलं काहीच बदलत नाही, फक्त फोनवरचा जुना session साफ होतो.",
-    en: "Not getting Telegram messages? Check whether you've sent /start to the bot first. Draw won't proceed? Check whose UPI ID is empty (the name is shown). Something stuck? Logout and log back in — this doesn't touch the database, it just clears the old session on your phone." },
+  { for: "all", icon: "🔐", t: { mr: "लॉगिन आणि Sign up", hi: "लॉगिन और Sign up", en: "Login & Sign up" },
+    body: {
+      mr: "नवीन असाल तर 'नवीन Sign up' टॅबवर जा — नाव, फोन, Telegram User ID (हा @userinfobot कडून मिळतो, फॉर्ममध्ये लिंक दिलेली आहे), तुमची भाषा (मराठी/हिंदी/English), आणि 4-6 अंकी PIN भरा. Sign up आधी @chitfindbot ला Telegram वर /start पाठवणं आवश्यक आहे — नाहीतर तुम्हाला कुठलीही सूचना मिळणार नाही. पहिला व्यक्ती जो signup करतो तो आपोआप Admin बनतो; त्यानंतरचे सगळे 'pending' राहतात जोपर्यंत Admin त्यांना Approve करत नाही. लॉगिन करताना 'मला लक्षात ठेवा' टिक केलं तर पुढच्या वेळी ID+PIN आपोआप भरलेले दिसतील (फक्त स्वतःच्या फोनवर वापरा).",
+      hi: "नए हैं तो 'नया Sign up' टैब पर जाएं — नाम, फोन, Telegram User ID (@userinfobot से मिलता है, फॉर्म में लिंक है), अपनी भाषा (मराठी/हिंदी/English), और 4-6 अंकों का PIN भरें। Sign up से पहले @chitfindbot को Telegram पर /start भेजना ज़रूरी है — नहीं तो कोई सूचना नहीं मिलेगी। सबसे पहला signup करने वाला अपने आप Admin बन जाता है; बाकी सभी 'pending' रहते हैं जब तक Admin approve न करे। लॉगिन में 'मुझे याद रखें' टिक करने पर अगली बार ID+PIN अपने आप भर जाएंगे (सिर्फ अपने फोन पर करें)।",
+      en: "New users go to the 'नवीन Sign up' tab — fill in name, phone, Telegram User ID (get it from @userinfobot, link is in the form), your preferred language (Marathi/Hindi/English), and a 4-6 digit PIN. You must send /start to @chitfindbot on Telegram before signing up, otherwise you won't receive any notifications. The very first person to sign up automatically becomes Admin; everyone after that stays 'pending' until Admin approves them. Ticking 'मला लक्षात ठेवा' on login saves your ID+PIN on that phone for next time (only use on your own phone)." } },
+  { for: "all", icon: "📒", t: { mr: "फंड्स टॅब", hi: "फंड्स टैब", en: "Funds tab" },
+    body: {
+      mr: "इथे तुम्ही ज्या चिट फंडांचे मेंबर आहात ते सगळे दिसतात. कुठल्याही फंडावर टॅप केलं की त्याचं आतलं पान उघडतं — मेंबर, चिठ्ठी, पेमेंट सगळं तिथे.",
+      hi: "यहां आप जिन चिट फंड के मेंबर हैं वे सभी दिखते हैं। किसी भी फंड पर टैप करने से उसका डिटेल पेज खुलता है — मेंबर, चिट्ठी, पेमेंट सब वहीं।",
+      en: "Shows every chit fund you're a member of. Tap any fund to open its detail page — members, draw, payments, all there." } },
+  { for: "all", icon: "🎟", t: { mr: "फंडाच्या आत — मेंबर आणि चिठ्ठी", hi: "फंड के अंदर — मेंबर और चिट्ठी", en: "Inside a fund — members & the draw" },
+    body: {
+      mr: "प्रत्येक महिन्याला Admin 'चिठ्ठी काढा' दाबतो — random विजेता निवडला जातो (किंवा 'Admin निवड' असेल तर Admin ने स्वतः निवडलेला, तेही स्पष्ट लेबल लावून). तुमचं नाव निघालं तर तुम्हाला Telegram वर कळेल आणि बाकी सर्वांना तुमचा UPI/QR जाईल. तुमचं नाव नाही निघालं तर विजेत्याचा UPI/QR तुम्हाला मिळेल — त्यावर हप्ता पाठवा.",
+      hi: "हर महीने Admin 'चिट्ठी काढा' दबाता है — random विजेता चुना जाता है (या 'Admin निवड' हो तो Admin ने खुद चुना हुआ, वह भी स्पष्ट लेबल के साथ)। आपका नाम निकला तो आपको Telegram पर पता चलेगा और बाकी सभी को आपका UPI/QR भेजा जाएगा। नाम नहीं निकला तो विजेता का UPI/QR आपको मिलेगा — उस पर किश्त भेजें।",
+      en: "Each month Admin taps 'चिठ्ठी काढा' — a random winner is picked (or, if manually chosen, clearly labeled 'Admin निवड'). If you win, you're notified on Telegram and your UPI/QR is sent to everyone else. If not, you receive the winner's UPI/QR — send your installment there." } },
+  { for: "all", icon: "💳", t: { mr: "पेमेंट, स्क्रीनशॉट आणि थकीत", hi: "पेमेंट, स्क्रीनशॉट और थकीत", en: "Payments, screenshot proof & overdue" },
+    body: {
+      mr: "तुमचा हप्ता भरल्यावर स्वतःच्या नावासमोरचा टॅग टॅप करून 'भरला' करा — तेव्हा स्क्रीनशॉट जोडायला (ऐच्छिक) विचारलं जातं; जोडला तर तो फक्त तुम्हाला, विजेत्याला, आणि Admin लाच दिसतो, बाकी कोणालाही नाही. देय तारखेनंतरही न भरल्यास 'थकीत ⚠️' दिसतं.",
+      hi: "किश्त भरने पर अपने नाम के सामने वाला टैग टैप करके 'भरला' करें — तब स्क्रीनशॉट जोड़ने का (ऐच्छिक) पूछा जाता है; जोड़ने पर वह सिर्फ आपको, विजेता को, और Admin को दिखता है, किसी और को नहीं। देय तारीख के बाद भी न भरने पर 'थकीत ⚠️' दिखता है।",
+      en: "After paying, tap the tag next to your own name to mark 'paid' — you'll be offered an optional screenshot; if added, it's visible only to you, the round's winner, and Admin, no one else. Still unpaid past the due date shows 'थकीत ⚠️' (overdue)." } },
+  { for: "all", icon: "🌐", t: { mr: "भाषा बदलणे", hi: "भाषा बदलना", en: "Changing your language" },
+    body: {
+      mr: "Profile टॅबमध्ये \"भाषा / Language\" मध्ये कधीही मराठी/हिंदी/English बदलू शकता — तुम्हाला येणारे सगळे Telegram मेसेज त्याच भाषेत जातील (Login/Signup स्क्रीनही निवडलेल्या भाषेत दिसते).",
+      hi: "Profile टैब में \"भाषा / Language\" से कभी भी मराठी/हिंदी/English बदल सकते हैं — आपको आने वाले सभी Telegram मेसेज उसी भाषा में जाएंगे (Login/Signup स्क्रीन भी चुनी भाषा में दिखती है)।",
+      en: "In the Profile tab under \"भाषा / Language\" you can change to Marathi/Hindi/English anytime — all your Telegram messages will then arrive in that language (the Login/Signup screen also follows your chosen language)." } },
+  { for: "all", icon: "👤", t: { mr: "प्रोफाईल", hi: "प्रोफाइल", en: "Profile" },
+    body: {
+      mr: "इथे स्वतःचा फोन, UPI ID, आणि QR कोड भरायचा/बदलायचा असतो. UPI ID भरलेला नसेल तर चिठ्ठीत भाग घेता येत नाही — draw अडतो. QR फाईल टाकली तर बाकी मेंबरना ती फोटोसह Telegram वर मिळते.",
+      hi: "यहां अपना फोन, UPI ID, और QR कोड भरना/बदलना होता है। UPI ID भरा न हो तो चिट्ठी में भाग नहीं ले सकते — draw रुक जाता है। QR फाइल डाली तो बाकी मेंबर को वह फोटो सहित Telegram पर मिलती है।",
+      en: "Set or update your own phone, UPI ID, and QR code here. Without a UPI ID you can't take part in the draw — it will block until it's filled in. If you upload a QR image, other members receive it as a photo on Telegram." } },
+  { for: "all", icon: "📲", t: { mr: "अ‍ॅप होम स्क्रीनवर install करणं (PWA)", hi: "ऐप होम स्क्रीन पर install करना (PWA)", en: "Installing the app on your home screen (PWA)" },
+    body: {
+      mr: "Android वर आपोआप 'install' पट्टी दिसते. iPhone वर Safari मध्ये उघडून खालचं Share बटण → 'Add to Home Screen' निवडा.",
+      hi: "Android पर अपने आप 'install' पट्टी दिखती है। iPhone पर Safari में खोलकर नीचे Share बटन → 'Add to Home Screen' चुनें।",
+      en: "On Android an install banner appears automatically. On iPhone, open in Safari, tap the Share button, then 'Add to Home Screen'." } },
+  { for: "all", icon: "📘", t: { mr: "वापर मार्गदर्शक (हेच पान)", hi: "यूज़र गाइड (यही पेज)", en: "User Guide (this page)" },
+    body: {
+      mr: "हे मार्गदर्शक Profile टॅबमधून कधीही उघडता येतं. Admin असाल तर वर आणखी 'फक्त Admin साठी' सेक्शन दिसतील. यात नवीन फीचर जोडलं की ही यादीही अपडेट होत राहील.",
+      hi: "यह गाइड Profile टैब से कभी भी खोला जा सकता है। Admin हैं तो ऊपर 'केवल Admin के लिए' सेक्शन भी दिखेंगे। नया फीचर जुड़ने पर यह सूची भी अपडेट होती रहेगी।",
+      en: "This guide can be opened anytime from the Profile tab. If you're Admin, extra 'Admin-only' sections appear too. As new features are added, this list gets updated to match." } },
+  { for: "admin", icon: "🎯", t: { mr: "मेंबर जोडणे आणि चिठ्ठी काढणे (Admin)", hi: "मेंबर जोड़ना और चिट्ठी निकालना (Admin)", en: "Adding members & running the draw (Admin)" },
+    body: {
+      mr: "फंडाच्या आत, ड्रॉपडाउनमधून approved मेंबर निवडून 'फंडमध्ये जोडा'. फंड आधीच सुरू असेल (मागच्या फेऱ्या झालेल्या) तर नवीन मेंबरचे मागचे हप्ते आपोआप 'बाकी' म्हणून नोंदवले जातात (catch-up). 'चिठ्ठी काढा' ने random draw होतो; UPI नसलेले मेंबर असल्यास अडतो — नावं दिसतील. 'विजेता स्वतः निवडा' ने तुम्ही स्वतः ठरवू शकता (पारदर्शक, सर्वांना कळतं). चूक झाली तर 'शेवटची चिठ्ठी रद्द करा'.",
+      hi: "फंड के अंदर, ड्रॉपडाउन से approved मेंबर चुनकर 'फंडमध्ये जोडा' दबाएं। फंड पहले से शुरू हो (पिछली फेरियां हो गई हों) तो नए मेंबर की पिछली किश्तें अपने आप 'बाकी' दर्ज हो जाती हैं (catch-up)। 'चिट्ठी काढा' से random draw होता है; UPI न भरे मेंबर हों तो रुक जाता है — नाम दिखेंगे। 'विजेता स्वतः निवडा' से आप खुद चुन सकते हैं (पारदर्शी, सभी को पता चलता है)। गलती हो तो 'शेवटची चिट्ठी रद्द करा'।",
+      en: "Inside a fund, pick an approved member from the dropdown and tap 'फंडमध्ये जोडा'. If the fund has already started (past rounds exist), the new member's past installments are automatically recorded as 'pending' (catch-up). 'चिठ्ठी काढा' runs a random draw; it blocks if any member's UPI is missing — names are shown. 'विजेता स्वतः निवडा' lets you pick manually (transparent, everyone is told). Made a mistake? 'शेवटची चिठ्ठी रद्द करा' undoes it." } },
+  { for: "admin", icon: "⏰", t: { mr: "रिमाइंडर, हिशोब शेअर आणि थकीत यादी (Admin)", hi: "रिमाइंडर, हिसाब शेयर और थकीत सूची (Admin)", en: "Reminders, ledger sharing & overdue list (Admin)" },
+    body: {
+      mr: "'बाकी असलेल्यांना रिमाइंडर' आणि 'QR पुन्हा पाठवा' — कोणाला गेलं नाही ते दिसतं (बहुधा त्याने बॉटला /start केलेलं नाही). 'हिशोब Telegram वर शेअर करा' — त्या फेरीचा हिशोब सगळ्या फंड-मेंबरना पाठवतं. Admin टॅबवरचं 'थकीत हप्ते — सर्व फंड एकत्र' कार्ड — सगळ्या फंडांमधलं थकीत एका जागी, टॅप करून त्या फंडात जाता येतं.",
+      hi: "'बाकी असलेल्यांना रिमाइंडर' और 'QR पुन्हा पाठवा' — किसे नहीं गया वह दिखता है (ज़्यादातर उसने बॉट को /start नहीं किया)। 'हिसाब Telegram पर शेयर करें' — उस फेरी का हिसाब सभी फंड-मेंबर को भेजता है। Admin टैब का 'थकीत हप्ते — सर्व फंड एकत्र' कार्ड — सभी फंड का थकीत एक जगह, टैप करके उस फंड में जा सकते हैं।",
+      en: "'बाकी असलेल्यांना रिमाइंडर' and 'QR पुन्हा पाठवा' — shows who it failed to reach (usually they haven't /start'd the bot). 'हिशोब Telegram वर शेअर करा' sends that round's ledger to every fund member. The Admin tab's 'थकीत हप्ते — सर्व फंड एकत्र' card lists all overdue payments across every fund, tap to jump to that fund." } },
+  { for: "admin", icon: "🛡", t: { mr: "मेंबर व्यवस्थापन (Admin)", hi: "मेंबर प्रबंधन (Admin)", en: "Member management (Admin)" },
+    body: {
+      mr: "'Pending Sign-up Requests' मध्ये approve/नकार. 'सर्व Approved मेंबर' मध्ये Admin बनवा/काढा, Edit, Delete. Edit उघडल्यावर नाव, फोन, UPI, Telegram ID, भाषा, PIN, आणि Role — सगळं एकाच फॉर्ममध्ये बदलता येतं. Delete फक्त चिठ्ठी-सुरू-न-झालेल्या फंडातल्या मेंबरसाठी चालतं. 'मेंबर थेट जोडा' ने signup न होता नवीन मेंबर बनवता येतो.",
+      hi: "'Pending Sign-up Requests' में approve/नकार। 'सर्व Approved मेंबर' में Admin बनवा/काढा, Edit, Delete। Edit खोलने पर नाम, फोन, UPI, Telegram ID, भाषा, PIN, और Role — सब एक ही फॉर्म में बदल सकते हैं। Delete सिर्फ उन मेंबर के लिए चलता है जो चिट्ठी-शुरू-न-हुए फंड में हों। 'मेंबर थेट जोडा' से signup के बिना नया मेंबर बना सकते हैं।",
+      en: "'Pending Sign-up Requests' — approve/reject. 'सर्व Approved मेंबर' — Admin toggle, Edit, Delete. Opening Edit lets you change name, phone, UPI, Telegram ID, language, PIN, and role — all in one form. Delete only works for members not yet in a fund where the draw has started. 'मेंबर थेट जोडा' creates a member without them signing up." } },
+  { for: "admin", icon: "📊", t: { mr: "आढावा, Broadcast, Export (Admin)", hi: "आढावा, Broadcast, Export (Admin)", en: "Overview, broadcast, export (Admin)" },
+    body: {
+      mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं. 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना Telegram मेसेज पाठवतं (मेसेज auto-translate होत नाही, जसा टाईप कराल तसा जातो) — कोणाला गेला नाही ते बटणाखाली दिसेल. 'CSV डाउनलोड करा' सगळा डेटा एका फाईलमध्ये देतं.",
+      hi: "'एकत्रित आढावा' सभी फंड की कुल जानकारी दिखाता है। 'सर्वांना मेसेज पाठवा' सभी approved मेंबर को Telegram मेसेज भेजता है (मेसेज auto-translate नहीं होता, जो टाइप करेंगे वही जाएगा) — किसे नहीं गया वह बटन के नीचे दिखेगा। 'CSV डाउनलोड करा' सारा डेटा एक फाइल में देता है।",
+      en: "'एकत्रित आढावा' shows totals across all funds. 'सर्वांना मेसेज पाठवा' sends a Telegram message to every approved member (not auto-translated, sent exactly as typed) — anyone it failed to reach shows below the button. 'CSV डाउनलोड करा' exports all data into one file." } },
+  { for: "all", icon: "🛠", t: { mr: "समस्या आल्यास", hi: "समस्या आने पर", en: "Troubleshooting" },
+    body: {
+      mr: "Telegram मेसेज येत नाही? आधी बॉटला /start केलंय का ते तपासा. Draw अडतो? कोणाचा UPI ID रिकामा आहे ते बघा (नाव दिसेल). काहीतरी अडकलं? Logout करून पुन्हा Login करा — डेटाबेसमधलं काहीच बदलत नाही, फक्त फोनवरचा जुना session साफ होतो.",
+      hi: "Telegram मेसेज नहीं आ रहा? पहले बॉट को /start किया है क्या देखें। Draw रुक रहा है? किसका UPI ID खाली है देखें (नाम दिखेगा)। कुछ अटक गया? Logout करके फिर Login करें — डेटाबेस में कुछ नहीं बदलता, सिर्फ फोन का पुराना session साफ होता है।",
+      en: "Not getting Telegram messages? Check whether you've sent /start to the bot first. Draw won't proceed? Check whose UPI ID is empty (the name is shown). Something stuck? Logout and log back in — this doesn't touch the database, it just clears the old session on your phone." } },
 ];
 let guideLang = "mr";
-function renderGuide() {
+function renderGuide(backTo) {
   const main = document.getElementById("mainArea");
+  const back = backTo || "profile";
+  const sections = GUIDE_SECTIONS.filter(s => s.for === "all" || (s.for === "admin" && session.role === "admin"));
   const render = () => {
     main.innerHTML = `
-      <button class="link-btn" id="guideBackBtn">‹ प्रोफाईलकडे परत / Back</button>
+      <button class="link-btn" id="guideBackBtn">‹ मागे / Back</button>
       <div class="card">
         <h2>📘 वापर मार्गदर्शक / User Guide</h2>
+        <p class="desc">${session.role === 'admin' ? '👑 Admin साठी सर्व सेक्शन दिसत आहेत / Showing all sections (incl. Admin-only)' : 'सर्व सदस्यांसाठी / For all members'}</p>
         <div class="tabs">
           <div class="tab-toggle ${guideLang==='mr'?'active':''}" id="gLangMr">मराठी</div>
+          <div class="tab-toggle ${guideLang==='hi'?'active':''}" id="gLangHi">हिंदी</div>
           <div class="tab-toggle ${guideLang==='en'?'active':''}" id="gLangEn">English</div>
         </div>
       </div>
       <div class="card">
-        ${GUIDE_SECTIONS.map((s, i) => `
+        ${sections.map((s, i) => `
           <div class="list-item" style="cursor:pointer;align-items:flex-start;" data-guide-toggle="${i}">
             <div style="flex:1;">
-              <div class="who">${s.icon} ${guideLang==='mr'?s.mr_t:s.en_t}</div>
-              <div class="meta" id="guideBody${i}" style="display:none;margin-top:6px;line-height:1.5;white-space:normal;">${guideLang==='mr'?s.mr:s.en}</div>
+              <div class="who">${s.icon} ${s.t[guideLang]}${s.for==='admin' ? ' <span class="tag wait" style="font-size:9px;">Admin</span>' : ''}</div>
+              <div class="meta" id="guideBody${i}" style="display:none;margin-top:6px;line-height:1.5;white-space:normal;">${s.body[guideLang]}</div>
             </div>
             <span style="font-size:12px;color:var(--muted);">▾</span>
           </div>`).join('')}
       </div>`;
-    document.getElementById("guideBackBtn").onclick = () => renderProfileTab();
+    document.getElementById("guideBackBtn").onclick = () => back === "profile" ? renderProfileTab() : renderShell();
     document.getElementById("gLangMr").onclick = () => { guideLang = "mr"; render(); };
+    document.getElementById("gLangHi").onclick = () => { guideLang = "hi"; render(); };
     document.getElementById("gLangEn").onclick = () => { guideLang = "en"; render(); };
     main.querySelectorAll("[data-guide-toggle]").forEach(el => el.onclick = () => {
       const body = document.getElementById("guideBody" + el.dataset.guideToggle);

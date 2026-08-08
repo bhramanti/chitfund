@@ -321,10 +321,10 @@ async function api(action, payload = {}) {
 let session = JSON.parse(localStorage.getItem("cf_session") || "null");
 // लॉगिननंतर संपूर्ण अॅपची भाषा (uiLang) — authLang पेक्षा वेगळी; ती फक्त लॉगिन/signup स्क्रीनसाठी आहे.
 // session.preferred_language वरून सेट होते आणि प्रोफाईलमध्ये भाषा बदलली की लगेच अपडेट होते.
-let uiLang = (session && session.preferred_language) || "mr";
+let uiLang = (session && session.preferred_language) || "en";
 function setSession(profile) {
   session = profile;
-  uiLang = profile.preferred_language || "mr";
+  uiLang = profile.preferred_language || "en";
   localStorage.setItem("cf_session", JSON.stringify(profile));
 }
 function logout() {
@@ -418,7 +418,7 @@ let qrBase64 = null;
 /* ---------------- Login/Signup स्क्रीनची भाषा (मराठी/हिंदी/English) ----------------
    हे फक्त लॉगिन-आधीच्या स्क्रीनसाठी आहे — signup करताना निवडलेली भाषा profile मध्ये
    preferred_language म्हणून साठवली जाते, आणि तीच पुढे सगळ्या Telegram मेसेजसाठी वापरली जाते. */
-let authLang = localStorage.getItem("cf_auth_lang") || "mr";
+let authLang = localStorage.getItem("cf_auth_lang") || "en";
 function setAuthLang(l) { authLang = l; localStorage.setItem("cf_auth_lang", l); }
 const AUTH_STRINGS = {
   mr: {
@@ -1607,9 +1607,9 @@ async function renderAdminTab() {
         <input type="password" id="mmPin" placeholder="${T('adminTab.pinPlaceholder')}" inputmode="numeric">
         <label>${T('adminTab.langLabel')}</label>
         <select id="mmLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
-          <option value="mr" selected>मराठी</option>
+          <option value="mr">मराठी</option>
           <option value="hi">हिंदी</option>
-          <option value="en">English</option>
+          <option value="en" selected>English</option>
         </select>
         <button class="btn" id="mmBtn">${T('adminTab.addMemberBtn')}</button>
       </div>`;
@@ -1630,7 +1630,6 @@ async function renderAdminTab() {
       <div class="list-item">
         <div><div class="who">${esc(p.name)} ${p.role==='admin'?'👑':''}</div><div class="meta">📞 ${esc(p.phone)||'-'} · UPI: ${esc(p.upi_id)||'-'}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-          <button class="small-btn secondary" data-role="${p.id}" data-newrole="${p.role==='admin'?'member':'admin'}">${p.role==='admin'?T('common.removeAdmin'):T('common.makeAdmin')}</button>
           <button class="small-btn secondary" data-edit="${p.id}">${T('common.edit')}</button>
           ${p.id===session.id ? '' : `<button class="small-btn maroon" data-del="${p.id}">${T('common.del')}</button>`}
         </div>
@@ -1655,14 +1654,6 @@ async function renderAdminTab() {
       const p = approved.find(x => x.id === el.dataset.del);
       if (!confirm(T('adminTab.deleteMemberConfirm')(p?.name))) return;
       try { await api("deleteMember", { profile_id: session.id, target_id: el.dataset.del }); toast(T('adminTab.memberDeleted')); renderAdminTab(); }
-      catch (e) { toast(e.message); }
-    });
-    main.querySelectorAll("[data-role]").forEach(el => el.onclick = async () => {
-      const p = approved.find(x => x.id === el.dataset.role);
-      const newRole = el.dataset.newrole;
-      const msg = newRole === 'admin' ? T('adminTab.makeAdminConfirm')(p?.name) : T('adminTab.removeAdminConfirm')(p?.name);
-      if (!confirm(msg)) return;
-      try { await api("setRole", { profile_id: session.id, target_id: el.dataset.role, role: newRole }); toast(T('adminTab.roleChanged')); renderAdminTab(); }
       catch (e) { toast(e.message); }
     });
     const mmBtn = document.getElementById("mmBtn");
@@ -1773,9 +1764,9 @@ function openEditMember(p) {
     <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">${T('editMember.tidNote')}</p>
     <label>${T('editMember.langLabel')}</label>
     <select id="emLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
-      <option value="mr" ${(!p.preferred_language || p.preferred_language==='mr')?'selected':''}>मराठी</option>
+      <option value="mr" ${p.preferred_language==='mr'?'selected':''}>मराठी</option>
       <option value="hi" ${p.preferred_language==='hi'?'selected':''}>हिंदी</option>
-      <option value="en" ${p.preferred_language==='en'?'selected':''}>English</option>
+      <option value="en" ${(!p.preferred_language || p.preferred_language==='en')?'selected':''}>English</option>
     </select>
     <label>${T('editMember.roleLabel')}</label>
     <div class="list-item" style="padding:8px 0;">
@@ -1856,9 +1847,9 @@ function renderProfileTab() {
       <h2>${T('profileTab.langHeading')}</h2>
       <p class="desc">${T('profileTab.langDesc')}</p>
       <select id="prLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
-        <option value="mr" ${session.preferred_language==='mr'||!session.preferred_language?'selected':''}>मराठी</option>
+        <option value="mr" ${session.preferred_language==='mr'?'selected':''}>मराठी</option>
         <option value="hi" ${session.preferred_language==='hi'?'selected':''}>हिंदी</option>
-        <option value="en" ${session.preferred_language==='en'?'selected':''}>English</option>
+        <option value="en" ${(!session.preferred_language || session.preferred_language==='en')?'selected':''}>English</option>
       </select>
       <button class="btn secondary" id="prLangSave" style="margin-top:10px;">${T('profileTab.langSaveBtn')}</button>
     </div>

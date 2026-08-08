@@ -435,7 +435,7 @@ const AUTH_STRINGS = {
     tidHelp1: "तुमचा Telegram ID मिळवायचे २ सोपे टप्पे:",
     tidHelp2: "१. खालचं बटण दाबा → Telegram मध्ये <b>@userinfobot</b> उघडेल → तिथे <b>Start</b> दाबा.<br>२. तो पाठवेल त्यातला <b>Id: 123456789</b> हा आकडा कॉपी करून वर टाका.",
     tidBtn: "📲 @userinfobot उघडा",
-    signupNote: "⚠️ लॉगिन आता तुमच्या मोबाईल नंबरने होईल (Telegram ID ने नाही). Telegram सूचना हव्या असतील तर वरचा Telegram ID भरा आणि आमच्या बॉट <b>@chitfindbot</b> ला Telegram वर <b>/start</b> पाठवा. UPI ID लॉगिननंतर प्रोफाईलमध्ये भरा (चिठ्ठीत भाग घ्यायला आवश्यक).",
+    signupNote: "⚠️ लॉगिन तुमच्या मोबाईल नंबर + PIN ने होईल. Telegram सूचना (चिठ्ठी/पेमेंट/रिमाइंडर) हव्या असतील तर लॉगिननंतर <b>Profile</b> मध्ये जाऊन Telegram ID भरा आणि आमच्या बॉट <b>@chitfindbot</b> ला <b>/start</b> पाठवा. UPI ID ही लॉगिननंतर Profile मध्ये भरा (चिठ्ठीत भाग घ्यायला आवश्यक).",
     pendingTitle: "⏳ प्रतीक्षेत", pendingBody: (n) => `नमस्कार ${n}, तुमचं खातं अजून Admin कडून Approve व्हायचंय. Approve झाल्यावर Telegram वर सूचना येईल.`,
   },
   hi: {
@@ -452,7 +452,7 @@ const AUTH_STRINGS = {
     tidHelp1: "अपना Telegram ID पाने के 2 आसान स्टेप:",
     tidHelp2: "1. नीचे दिया बटन दबाएं → Telegram में <b>@userinfobot</b> खुलेगा → वहां <b>Start</b> दबाएं।<br>2. वह जो भेजेगा उसमें से <b>Id: 123456789</b> यह नंबर कॉपी करके ऊपर डालें।",
     tidBtn: "📲 @userinfobot खोलें",
-    signupNote: "⚠️ लॉगिन अब आपके मोबाइल नंबर से होगा (Telegram ID से नहीं). Telegram सूचनाएं चाहिए तो ऊपर Telegram ID भरें और हमारे बॉट <b>@chitfindbot</b> को Telegram पर <b>/start</b> भेजें। UPI ID लॉगिन के बाद प्रोफाइल में भरें (चिट्ठी में भाग लेने के लिए ज़रूरी)।",
+    signupNote: "⚠️ लॉगिन आपके मोबाइल नंबर + PIN से होगा। Telegram सूचनाएं (चिट्ठी/पेमेंट/रिमाइंडर) चाहिए तो लॉगिन के बाद <b>Profile</b> में जाकर Telegram ID भरें और हमारे बॉट <b>@chitfindbot</b> को <b>/start</b> भेजें। UPI ID भी लॉगिन के बाद Profile में भरें (चिट्ठी में भाग लेने के लिए ज़रूरी)।",
     pendingTitle: "⏳ प्रतीक्षा में", pendingBody: (n) => `नमस्ते ${n}, आपका खाता अभी Admin से Approve होना बाकी है। Approve होने पर Telegram पर सूचना आएगी।`,
   },
   en: {
@@ -469,7 +469,7 @@ const AUTH_STRINGS = {
     tidHelp1: "2 easy steps to get your Telegram ID:",
     tidHelp2: "1. Tap the button below → <b>@userinfobot</b> opens in Telegram → tap <b>Start</b> there.<br>2. Copy the number after <b>Id: 123456789</b> from its reply and paste it above.",
     tidBtn: "📲 Open @userinfobot",
-    signupNote: "⚠️ Login is now with your mobile number (not Telegram ID). If you want Telegram notifications, fill the Telegram ID above and send <b>/start</b> to our bot <b>@chitfindbot</b> on Telegram. Add your UPI ID in Profile after logging in (required to take part in the draw).",
+    signupNote: "⚠️ Login is with your mobile number + PIN. If you want Telegram notifications (draws, payments, reminders), open <b>Profile</b> after logging in, add your Telegram ID there, and send <b>/start</b> to our bot <b>@chitfindbot</b>. Add your UPI ID in Profile too (required to take part in the draw).",
     pendingTitle: "⏳ Pending", pendingBody: (n) => `Hi ${n}, your account is still waiting for Admin approval. You'll get a Telegram notification once approved.`,
   },
 };
@@ -646,6 +646,15 @@ const UI_STRINGS = {
       upiIdRequiredLabel: "UPI ID *", qrLabel: "UPI QR कोड", qrOptionalTag: "(ऐच्छिक)",
       qrPick: "QR फाईल निवडा 📎", upiRequired: "UPI ID भरा",
       saving: "जतन होत आहे...", saved: "माहिती जतन झाली",
+      tgHeading: "🔔 Telegram सूचना (ऐच्छिक)",
+      tgDesc: "तुमचा Telegram ID इथे भरला आणि आमच्या बॉट <b>@chitfindbot</b> ला Telegram वर <b>/start</b> पाठवलं की चिठ्ठी/पेमेंट/रिमाइंडरच्या सूचना तुम्हाला Telegram वर मिळतील. रिकामा ठेवला तर कुठलीही सूचना जाणार नाही (अ‍ॅप तसंच चालतं).",
+      tgIdLabel: "Telegram User ID",
+      tgIdPlaceholder: "उदा. 123456789",
+      tgHelp: "मिळवायचं कसं? @userinfobot ला Telegram वर उघडा → Start दाबा → तो पाठवेल त्यातला Id: 123456789 हा आकडा कॉपी करा.",
+      tgOpenBot: "📲 @userinfobot उघडा",
+      tgSave: "Telegram ID जतन करा",
+      tgSaved: "Telegram ID जतन झाला — आता @chitfindbot ला /start पाठवा",
+      tgCleared: "Telegram ID काढला — सूचना बंद",
       guideBtn: "📘 वापर मार्गदर्शक / User Guide",
     },
   },
@@ -816,6 +825,15 @@ const UI_STRINGS = {
       upiIdRequiredLabel: "UPI ID *", qrLabel: "UPI QR कोड", qrOptionalTag: "(ऐच्छिक)",
       qrPick: "QR फाइल चुनें 📎", upiRequired: "UPI ID भरें",
       saving: "जतन हो रहा है...", saved: "जानकारी जतन हुई",
+      tgHeading: "🔔 Telegram सूचनाएं (ऐच्छिक)",
+      tgDesc: "अपना Telegram ID यहां भरें और हमारे बॉट <b>@chitfindbot</b> को Telegram पर <b>/start</b> भेजें — तभी चिट्ठी/पेमेंट/रिमाइंडर की सूचनाएं Telegram पर मिलेंगी। खाली रखा तो कोई सूचना नहीं जाएगी (ऐप वैसे ही चलता रहेगा)।",
+      tgIdLabel: "Telegram User ID",
+      tgIdPlaceholder: "उदा. 123456789",
+      tgHelp: "पाना कैसे है? @userinfobot को Telegram पर खोलें → Start दबाएं → वह जो भेजे उसमें Id: 123456789 यह नंबर कॉपी करें.",
+      tgOpenBot: "📲 @userinfobot खोलें",
+      tgSave: "Telegram ID जतन करें",
+      tgSaved: "Telegram ID जतन हुआ — अब @chitfindbot को /start भेजें",
+      tgCleared: "Telegram ID हटाया — सूचनाएं बंद",
       guideBtn: "📘 उपयोग गाइड / User Guide",
     },
   },
@@ -986,6 +1004,15 @@ const UI_STRINGS = {
       upiIdRequiredLabel: "UPI ID *", qrLabel: "UPI QR code", qrOptionalTag: "(optional)",
       qrPick: "Choose QR file 📎", upiRequired: "Enter a UPI ID",
       saving: "Saving...", saved: "Info saved",
+      tgHeading: "🔔 Telegram notifications (optional)",
+      tgDesc: "Add your Telegram ID here and send <b>/start</b> to our bot <b>@chitfindbot</b> on Telegram — only then will draw/payment/reminder notifications reach you. Leave blank and no notifications will be sent (the app still works).",
+      tgIdLabel: "Telegram User ID",
+      tgIdPlaceholder: "e.g. 123456789",
+      tgHelp: "How to get it: open @userinfobot on Telegram → tap Start → copy the number after Id: 123456789 from its reply.",
+      tgOpenBot: "📲 Open @userinfobot",
+      tgSave: "Save Telegram ID",
+      tgSaved: "Telegram ID saved — now send /start to @chitfindbot",
+      tgCleared: "Telegram ID removed — notifications off",
       guideBtn: "📘 User Guide",
     },
   },
@@ -1080,16 +1107,7 @@ function renderSignupForm() {
     <input type="text" id="suName">
     <label>${S.phoneLabel}</label>
     <input type="tel" id="suPhone" placeholder="9876543210">
-    <label>${S.tidLabel} <span style="font-weight:400;color:var(--muted);">${S.optionalTag}</span></label>
-    <input type="text" id="suTid" placeholder="123456789" inputmode="numeric">
-    <p style="font-size:11.5px;color:var(--muted);margin:2px 0 6px;">${S.tidWhy}</p>
-    <div style="background:var(--paper);border:1px dashed var(--line);border-radius:6px;padding:10px;margin-top:6px;">
-      <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">${S.tidHelp1}</p>
-      <p style="font-size:12px;color:var(--ink);margin:0 0 8px;">${S.tidHelp2}</p>
-      <a href="https://t.me/userinfobot" target="_blank" rel="noopener" class="small-btn" style="display:inline-block;text-decoration:none;">${S.tidBtn}</a>
-    </div>
-    <label>${S.upiLabel} <span style="font-weight:400;color:var(--muted);"></span></label>
-    <input type="text" id="suUpi" placeholder="yourname@upi" style="display:none;">
+    <input type="text" id="suUpi" style="display:none;">
     <label>${S.langLabel}</label>
     <select id="suLang" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
       <option value="mr" ${authLang==='mr'?'selected':''}>मराठी</option>
@@ -1103,14 +1121,13 @@ function renderSignupForm() {
   document.getElementById("suBtn").onclick = async () => {
     const name = document.getElementById("suName").value.trim();
     const phone = document.getElementById("suPhone").value.trim();
-    const telegram_id = document.getElementById("suTid").value.trim();
     const pin = document.getElementById("suPin").value.trim();
     const preferred_language = document.getElementById("suLang").value;
     if (!name || !phone || !pin) return showAuthMsg("*", true);
     const btn = document.getElementById("suBtn");
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>...';
     try {
-      const { isFirstAdmin } = await api("signup", { name, phone, telegram_id: telegram_id || null, pin, preferred_language });
+      const { isFirstAdmin } = await api("signup", { name, phone, pin, preferred_language });
       showAuthMsg(isFirstAdmin
         ? "तुम्ही पहिले युजर असल्यामुळे थेट Admin म्हणून खातं तयार झालं आहे! आता लॉगिन करा. / You are the first user, so you're now Admin — please log in."
         : "Sign up request पाठवली! Admin approve केल्यावर सूचना मिळेल. / Sign up request sent! You'll be notified once Admin approves.", false);
@@ -1924,7 +1941,7 @@ function renderProfileTab() {
       <h2>${esc(session.name)}</h2>
       <p class="desc">${session.role === 'admin' ? '👑 ' + T('common.admin') : T('common.member')}</p>
       <div class="list-item"><div class="who">${T('profileTab.phoneLabel')}</div><div class="meta">${esc(session.phone)||'-'}</div></div>
-      <div class="list-item"><div class="who">${T('profileTab.tidLabel')}</div><div class="meta">${esc(session.telegram_id)}</div></div>
+      <div class="list-item"><div class="who">${T('profileTab.tidLabel')}</div><div class="meta">${(session.telegram_id && session.telegram_id > 0) ? esc(session.telegram_id) : '-'}</div></div>
       <div class="list-item"><div class="who">${T('profileTab.upiLabel')}</div><div class="meta">${esc(session.upi_id)||'-'}</div></div>
       ${session.qr_url ? `<img src="${session.qr_url}" class="qr-preview" style="display:block;margin-top:10px;">` : ''}
     </div>
@@ -1937,6 +1954,15 @@ function renderProfileTab() {
         <option value="en" ${(!session.preferred_language || session.preferred_language==='en')?'selected':''}>English</option>
       </select>
       <button class="btn secondary" id="prLangSave" style="margin-top:10px;">${T('profileTab.langSaveBtn')}</button>
+    </div>
+    <div class="card">
+      <h2>${T('profileTab.tgHeading')}</h2>
+      <p class="desc">${T('profileTab.tgDesc')}</p>
+      <label>${T('profileTab.tgIdLabel')}</label>
+      <input type="text" id="prTid" inputmode="numeric" placeholder="${T('profileTab.tgIdPlaceholder')}" value="${(session.telegram_id && session.telegram_id > 0) ? esc(session.telegram_id) : ''}">
+      <p style="font-size:11.5px;color:var(--muted);margin:4px 0 8px;">${T('profileTab.tgHelp')}</p>
+      <a href="https://t.me/userinfobot" target="_blank" rel="noopener" class="small-btn secondary" style="display:inline-block;text-decoration:none;margin-bottom:8px;">${T('profileTab.tgOpenBot')}</a>
+      <button class="btn secondary" id="prTidSave">${T('profileTab.tgSave')}</button>
     </div>
     <div class="card">
       <h2>${T('profileTab.paymentInfoHeading')}</h2>
@@ -1954,6 +1980,17 @@ function renderProfileTab() {
     <button class="btn secondary" id="guideBtn">${T('profileTab.guideBtn')}</button>
     <button class="btn secondary" id="pLogout">${T('common.logout')}</button>`;
 
+  document.getElementById("prTidSave").onclick = async () => {
+    const raw = document.getElementById("prTid").value.trim();
+    const btn = document.getElementById("prTidSave");
+    btn.disabled = true;
+    try {
+      const { profile } = await api("updateProfile", { profile_id: session.id, telegram_id: raw });
+      setSession(profile);
+      toast(raw === "" ? T('profileTab.tgCleared') : T('profileTab.tgSaved'));
+      renderProfileTab();
+    } catch (e) { toast(e.message); btn.disabled = false; }
+  };
   document.getElementById("prLangSave").onclick = async () => {
     const preferred_language = document.getElementById("prLang").value;
     const btn = document.getElementById("prLangSave");
@@ -1998,9 +2035,9 @@ function renderProfileTab() {
 const GUIDE_SECTIONS = [
   { for: "all", icon: "🔐", t: { mr: "लॉगिन आणि Sign up", hi: "लॉगिन और Sign up", en: "Login & Sign up" },
     body: {
-      mr: "आता लॉगिन तुमच्या <b>मोबाईल नंबर + PIN</b> ने होतं (Telegram ID ने नाही). नवीन असाल तर 'नवीन Sign up' टॅबवर जा — नाव, मोबाईल नंबर, 4-6 अंकी PIN, आणि तुमची भाषा (मराठी/हिंदी/English) भरा. Telegram User ID हा फॉर्ममध्ये आता ऐच्छिक आहे — तो दिला आणि @chitfindbot ला Telegram वर /start पाठवलं तरच तुम्हाला चिठ्ठी/पेमेंट/रिमाइंडरच्या सूचना मिळतील; नंतर Profile मधूनही भरता येतो. पहिला व्यक्ती जो signup करतो तो आपोआप Admin बनतो; त्यानंतरचे सगळे 'pending' राहतात जोपर्यंत Admin त्यांना Approve करत नाही. लॉगिन करताना 'मला लक्षात ठेवा' टिक केलं तर पुढच्या वेळी नंबर+PIN आपोआप भरलेले दिसतील (फक्त स्वतःच्या फोनवर वापरा).",
-      hi: "अब लॉगिन आपके <b>मोबाइल नंबर + PIN</b> से होता है (Telegram ID से नहीं). नए हैं तो 'नया Sign up' टैब पर जाएं — नाम, मोबाइल नंबर, 4-6 अंकों का PIN, और अपनी भाषा (मराठी/हिंदी/English) भरें। Telegram User ID फॉर्म में अब ऐच्छिक है — वह दिया और @chitfindbot को Telegram पर /start भेजा तभी आपको चिट्ठी/पेमेंट/रिमाइंडर की सूचनाएं मिलेंगी; बाद में Profile से भी भर सकते हैं। सबसे पहला signup करने वाला अपने आप Admin बन जाता है; बाकी सभी 'pending' रहते हैं जब तक Admin approve न करे। लॉगिन में 'मुझे याद रखें' टिक करने पर अगली बार नंबर+PIN अपने आप भर जाएंगे (सिर्फ अपने फोन पर करें)।",
-      en: "Login is now with your <b>mobile number + PIN</b> (not Telegram ID). New users go to the 'नवीन Sign up' tab — fill in name, mobile number, a 4-6 digit PIN, and your preferred language (Marathi/Hindi/English). The Telegram User ID field is now optional — only fill it and send /start to @chitfindbot on Telegram if you want notifications for draws, payments and reminders; you can also add it later from Profile. The very first person to sign up automatically becomes Admin; everyone after that stays 'pending' until Admin approves them. Ticking 'मला लक्षात ठेवा' on login saves your number+PIN on that phone for next time (only use on your own phone)." } },
+      mr: "लॉगिन तुमच्या <b>मोबाईल नंबर + PIN</b> ने होतं. नवीन असाल तर 'नवीन Sign up' टॅबवर जा — फक्त नाव, मोबाईल नंबर, 4-6 अंकी PIN, आणि तुमची भाषा (मराठी/हिंदी/English) एवढंच भरा. Telegram ID signup मध्ये लागत नाही — नंतर लॉगिन झाल्यावर <b>Profile</b> टॅबमधल्या '🔔 Telegram सूचना' कार्डमध्ये भरा आणि @chitfindbot ला Telegram वर /start पाठवा — तरच तुम्हाला चिठ्ठी/पेमेंट/रिमाइंडरच्या सूचना मिळतील. Telegram नसेल तरी अ‍ॅप पूर्ण चालतं. पहिला व्यक्ती जो signup करतो तो आपोआप Admin बनतो; त्यानंतरचे सगळे 'pending' राहतात जोपर्यंत Admin त्यांना Approve करत नाही. लॉगिन करताना 'मला लक्षात ठेवा' टिक केलं तर पुढच्या वेळी नंबर+PIN आपोआप भरलेले दिसतील (फक्त स्वतःच्या फोनवर वापरा).",
+      hi: "लॉगिन आपके <b>मोबाइल नंबर + PIN</b> से होता है। नए हैं तो 'नया Sign up' टैब पर जाएं — सिर्फ नाम, मोबाइल नंबर, 4-6 अंकों का PIN, और अपनी भाषा (मराठी/हिंदी/English) भरें। Telegram ID signup में नहीं लगती — बाद में लॉगिन के बाद <b>Profile</b> टैब के '🔔 Telegram सूचनाएं' कार्ड में भरें और @chitfindbot को Telegram पर /start भेजें — तभी चिट्ठी/पेमेंट/रिमाइंडर की सूचनाएं मिलेंगी। Telegram न भी हो तो ऐप पूरा चलता है। सबसे पहला signup करने वाला अपने आप Admin बन जाता है; बाकी सभी 'pending' रहते हैं जब तक Admin approve न करे। लॉगिन में 'मुझे याद रखें' टिक करने पर अगली बार नंबर+PIN अपने आप भर जाएंगे (सिर्फ अपने फोन पर करें)।",
+      en: "Login is with your <b>mobile number + PIN</b>. New users go to the 'नवीन Sign up' tab — just fill in name, mobile number, a 4-6 digit PIN, and your preferred language (Marathi/Hindi/English). Telegram ID is not asked at signup — add it later after login from the '🔔 Telegram notifications' card in the <b>Profile</b> tab, and send /start to @chitfindbot on Telegram — only then will you receive draw/payment/reminder notifications. The app works fully even without Telegram. The very first person to sign up automatically becomes Admin; everyone after that stays 'pending' until Admin approves them. Ticking 'मला लक्षात ठेवा' on login saves your number+PIN on that phone for next time (only use on your own phone)." } },
   { for: "all", icon: "📒", t: { mr: "फंड्स टॅब", hi: "फंड्स टैब", en: "Funds tab" },
     body: {
       mr: "इथे तुम्ही ज्या चिट फंडांचे मेंबर आहात ते सगळे दिसतात. कुठल्याही फंडावर टॅप केलं की त्याचं आतलं पान उघडतं — मेंबर, चिठ्ठी, पेमेंट सगळं तिथे.",
@@ -2023,9 +2060,9 @@ const GUIDE_SECTIONS = [
       en: "In the Profile tab under \"भाषा / Language\" you can change to Marathi/Hindi/English anytime — all your Telegram messages will then arrive in that language (the Login/Signup screen also follows your chosen language)." } },
   { for: "all", icon: "👤", t: { mr: "प्रोफाईल", hi: "प्रोफाइल", en: "Profile" },
     body: {
-      mr: "इथे स्वतःचा फोन, UPI ID, आणि QR कोड भरायचा/बदलायचा असतो. UPI ID भरलेला नसेल तर चिठ्ठीत भाग घेता येत नाही — draw अडतो. QR फाईल टाकली तर बाकी मेंबरना ती फोटोसह Telegram वर मिळते.",
-      hi: "यहां अपना फोन, UPI ID, और QR कोड भरना/बदलना होता है। UPI ID भरा न हो तो चिट्ठी में भाग नहीं ले सकते — draw रुक जाता है। QR फाइल डाली तो बाकी मेंबर को वह फोटो सहित Telegram पर मिलती है।",
-      en: "Set or update your own phone, UPI ID, and QR code here. Without a UPI ID you can't take part in the draw — it will block until it's filled in. If you upload a QR image, other members receive it as a photo on Telegram." } },
+      mr: "इथे स्वतःचा फोन, UPI ID, QR कोड, भाषा, आणि '🔔 Telegram सूचना' कार्डमधून <b>Telegram ID</b> भरायचा/बदलायचा असतो. UPI ID भरलेला नसेल तर चिठ्ठीत भाग घेता येत नाही — draw अडतो. QR फाईल टाकली तर बाकी मेंबरना ती फोटोसह Telegram वर मिळते. Telegram ID भरला आणि @chitfindbot ला /start पाठवला तरच तुम्हाला सूचना मिळतील; रिकामा ठेवला तर सूचना बंद (पण अ‍ॅप तसंच चालतं).",
+      hi: "यहां अपना फोन, UPI ID, QR कोड, भाषा, और '🔔 Telegram सूचनाएं' कार्ड से <b>Telegram ID</b> भरना/बदलना होता है। UPI ID भरा न हो तो चिट्ठी में भाग नहीं ले सकते — draw रुक जाता है। QR फाइल डाली तो बाकी मेंबर को वह फोटो सहित Telegram पर मिलती है। Telegram ID भरा और @chitfindbot को /start भेजा तभी सूचनाएं मिलेंगी; खाली रखा तो सूचनाएं बंद (पर ऐप वैसे ही चलता है)।",
+      en: "Set or update your own phone, UPI ID, QR code, language, and <b>Telegram ID</b> (from the '🔔 Telegram notifications' card) here. Without a UPI ID you can't take part in the draw — it will block until it's filled in. If you upload a QR image, other members receive it as a photo on Telegram. Notifications reach you only if you add a Telegram ID here AND send /start to @chitfindbot; leaving it blank turns notifications off (the app still works)." } },
   { for: "all", icon: "📲", t: { mr: "अ‍ॅप होम स्क्रीनवर install करणं (PWA)", hi: "ऐप होम स्क्रीन पर install करना (PWA)", en: "Installing the app on your home screen (PWA)" },
     body: {
       mr: "Android वर आपोआप 'install' पट्टी दिसते. iPhone वर Safari मध्ये उघडून खालचं Share बटण → 'Add to Home Screen' निवडा.",

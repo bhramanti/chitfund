@@ -631,6 +631,9 @@ const UI_STRINGS = {
       overdueHeadingCount: (n) => `⚠️ थकीत हप्ते — सर्व फंड एकत्र (${n})`,
       overdueDue: (date, days) => `देय ${date} पासून ${days} दिवस थकीत`,
       writeMessage: "मेसेज लिहा", broadcastConfirm: "सर्व मेंबरना हा मेसेज पाठवायचा?",
+      targetHeading: "🎯 निवडक सदस्यांना मेसेज", targetDesc: "एक, काही किंवा सर्व सदस्य निवडा आणि Telegram मेसेज पाठवा.",
+      selectAll: "सर्व निवडा", sendSelected: "निवडलेल्यांना पाठवा",
+      noneSelected: "किमान एक सदस्य निवडा", targetSent: (n) => `${n} जणांना मेसेज गेला`, noTgTag: "(Telegram नाही)",
       broadcastSent: (n) => `${n} जणांना मेसेज गेला`,
       broadcastFailedHeading: (n) => `${n} जणांना गेला नाही:`,
       exportDone: "डाउनलोड सुरू",
@@ -816,6 +819,9 @@ const UI_STRINGS = {
       overdueHeadingCount: (n) => `⚠️ बाकी किश्तें — सभी फंड मिलाकर (${n})`,
       overdueDue: (date, days) => `देय ${date} से ${days} दिन बाकी`,
       writeMessage: "मेसेज लिखें", broadcastConfirm: "सभी मेंबर को यह मेसेज भेजना है?",
+      targetHeading: "🎯 चुनिंदा सदस्यों को मेसेज", targetDesc: "एक, कुछ या सभी सदस्य चुनें और Telegram मेसेज भेजें.",
+      selectAll: "सभी चुनें", sendSelected: "चुने हुए को भेजें",
+      noneSelected: "कम से कम एक सदस्य चुनें", targetSent: (n) => `${n} लोगों को मेसेज गया`, noTgTag: "(Telegram नहीं)",
       broadcastSent: (n) => `${n} लोगों को मेसेज गया`,
       broadcastFailedHeading: (n) => `${n} लोगों को नहीं गया:`,
       exportDone: "डाउनलोड शुरू",
@@ -1001,6 +1007,9 @@ const UI_STRINGS = {
       overdueHeadingCount: (n) => `⚠️ Overdue installments — all funds combined (${n})`,
       overdueDue: (date, days) => `Due since ${date} — ${days} days overdue`,
       writeMessage: "Write a message", broadcastConfirm: "Send this message to all members?",
+      targetHeading: "🎯 Message selected members", targetDesc: "Pick one, some, or all members and send a Telegram message.",
+      selectAll: "Select all", sendSelected: "Send to selected",
+      noneSelected: "Select at least one member", targetSent: (n) => `Message sent to ${n}`, noTgTag: "(no Telegram)",
       broadcastSent: (n) => `Message sent to ${n} people`,
       broadcastFailedHeading: (n) => `Failed to reach ${n} people:`,
       exportDone: "Download started",
@@ -1700,6 +1709,22 @@ async function renderAdminTab() {
         <div id="bcResult" style="margin-top:8px;"></div>
       </div>
       <div class="card">
+        <h2>${T('adminTab.targetHeading')}</h2>
+        <p class="desc">${T('adminTab.targetDesc')}</p>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:6px;cursor:pointer;">
+          <input type="checkbox" id="smAll" style="width:17px;height:17px;"> ${T('adminTab.selectAll')}
+        </label>
+        <div id="smList" style="max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin-bottom:8px;">
+          ${approved.map(p => `<label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;${(p.telegram_id>0)?'':'opacity:.55;'}">
+            <input type="checkbox" class="sm-cb" value="${p.id}" ${(p.telegram_id>0)?'':'disabled'} style="width:16px;height:16px;flex:0 0 auto;">
+            <span>${crown(p.name)} ${(p.telegram_id>0)?'':`<small>${T('adminTab.noTgTag')}</small>`}</span>
+          </label>`).join('')}
+        </div>
+        <input type="text" id="smText" placeholder="${T('adminTab.writeMessage')}">
+        <button class="btn" id="smBtn">${T('adminTab.sendSelected')}</button>
+        <div id="smResult" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
         <button class="btn secondary" id="notifyLoginBtn">${T('adminTab.notifyLoginBtn')}</button>
         <div id="nlResult" style="margin-top:8px;"></div>
       </div>
@@ -1868,6 +1893,31 @@ async function renderAdminTab() {
       }
       catch (e) { toast(e.message); }
       notifyLoginBtn.disabled = false; notifyLoginBtn.textContent = T('adminTab.notifyLoginBtn');
+    };
+
+    const smAll = document.getElementById("smAll");
+    if (smAll) smAll.onchange = () => {
+      document.querySelectorAll("#smList .sm-cb:not([disabled])").forEach(cb => { cb.checked = smAll.checked; });
+    };
+    const smBtn = document.getElementById("smBtn");
+    if (smBtn) smBtn.onclick = async () => {
+      const ids = Array.from(document.querySelectorAll("#smList .sm-cb:checked")).map(cb => cb.value);
+      const text = document.getElementById("smText").value.trim();
+      if (!ids.length) return toast(T('adminTab.noneSelected'));
+      if (!text) return toast(T('adminTab.writeMessage'));
+      smBtn.disabled = true; smBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
+      const smResult = document.getElementById("smResult");
+      smResult.innerHTML = "";
+      try {
+        const { sent, failed } = await api("sendToMembers", { profile_id: session.id, target_ids: ids, text });
+        toast(T('adminTab.targetSent')(sent));
+        document.getElementById("smText").value = "";
+        if (failed && failed.length) {
+          smResult.innerHTML = `<div class="error-box">${T('adminTab.broadcastFailedHeading')(failed.length)}<br>${failed.map(f => esc(f)).join('<br>')}</div>`;
+        }
+      }
+      catch (e) { toast(e.message); }
+      smBtn.disabled = false; smBtn.textContent = T('adminTab.sendSelected');
     };
 
     const exportBtn = document.getElementById("exportBtn");
@@ -2141,9 +2191,9 @@ const GUIDE_SECTIONS = [
       en: "'Pending Sign-up Requests' — approve/reject. 'सर्व Approved मेंबर' — Edit, Delete (the Admin toggle now lives inside Edit). Opening Edit lets you change name, phone (this is now their login — tell the member if you change it), UPI, Telegram ID, language, PIN, and role — all in one form. Delete only works for members not yet in a fund where the draw has started. 'मेंबर थेट जोडा' creates a member without them signing up (mobile number required) — right after adding, a 'share login details' card opens; Copy/Share it and send it to the member via WhatsApp/SMS. Use the '🔐 Notify everyone of the new login method' button (next section) to send all existing members a one-time notice that login is now by mobile number." } },
   { for: "admin", icon: "📊", t: { mr: "आढावा, Broadcast, Export (Admin)", hi: "आढावा, Broadcast, Export (Admin)", en: "Overview, broadcast, export (Admin)" },
     body: {
-      mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं. 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना Telegram मेसेज पाठवतं (मेसेज auto-translate होत नाही, जसा टाईप कराल तसा जातो) — कोणाला गेला नाही ते बटणाखाली दिसेल. '🔐 सर्व सदस्यांना नवीन लॉगिन कळवा' — लॉगिन मोबाईल नंबरने झाल्यावर सगळ्या जुन्या सदस्यांना एकवेळची सूचना (त्यांचा नंबर + पायऱ्या) पाठवतं. 'CSV डाउनलोड करा' सगळा डेटा एका फाईलमध्ये देतं.",
-      hi: "'एकत्रित आढावा' सभी फंड की कुल जानकारी दिखाता है। 'सर्वांना मेसेज पाठवा' सभी approved मेंबर को Telegram मेसेज भेजता है (मेसेज auto-translate नहीं होता, जो टाइप करेंगे वही जाएगा) — किसे नहीं गया वह बटन के नीचे दिखेगा। '🔐 सभी सदस्यों को नया लॉगिन बताएं' — लॉगिन मोबाइल नंबर से होने पर सभी पुराने सदस्यों को एकबारगी सूचना (उनका नंबर + स्टेप्स) भेजता है। 'CSV डाउनलोड करा' सारा डेटा एक फाइल में देता है।",
-      en: "'एकत्रित आढावा' shows totals across all funds. 'सर्वांना मेसेज पाठवा' sends a Telegram message to every approved member (not auto-translated, sent exactly as typed) — anyone it failed to reach shows below the button. '🔐 Notify everyone of the new login method' sends all existing members a one-time notice (their number + steps) now that login is by mobile number. 'CSV डाउनलोड करा' exports all data into one file." } },
+      mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं. 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना एकत्र Telegram मेसेज पाठवतं (auto-translate होत नाही, जसा टाईप कराल तसा). '🎯 निवडक सदस्यांना मेसेज' — यात एक, काही किंवा 'सर्व निवडा' करून हवे त्यांनाच मेसेज पाठवता येतो (checkbox ने निवडा). दोन्हींमध्ये कोणाला गेला नाही ते खाली दिसतं. '🔐 सर्व सदस्यांना नवीन लॉगिन कळवा' — जुन्या सदस्यांना लॉगिन-बदलाची एकवेळची सूचना. 'CSV डाउनलोड करा' सगळा डेटा एका फाईलमध्ये देतं.",
+      hi: "'एकत्रित आढावा' सभी फंड की कुल जानकारी दिखाता है। 'सर्वांना मेसेज पाठवा' सभी approved मेंबर को एक साथ Telegram मेसेज भेजता है (auto-translate नहीं होता)। '🎯 चुनिंदा सदस्यों को मेसेज' — इसमें एक, कुछ या 'सभी चुनें' करके सिर्फ चुने हुए लोगों को मेसेज भेज सकते हैं (checkbox से चुनें)। दोनों में किसे नहीं गया वह नीचे दिखता है। '🔐 सभी सदस्यों को नया लॉगिन बताएं' — पुराने सदस्यों को लॉगिन-बदलाव की एकबारगी सूचना। 'CSV डाउनलोड करा' सारा डेटा एक फाइल में देता है।",
+      en: "'एकत्रित आढावा' shows totals across all funds. 'सर्वांना मेसेज पाठवा' sends a Telegram message to every approved member at once (not auto-translated). '🎯 Message selected members' lets you pick one, some, or 'Select all' and message only those (tick the checkboxes). In both, anyone it failed to reach shows below. '🔐 Notify everyone of the new login method' sends existing members a one-time login-change notice. 'CSV डाउनलोड करा' exports all data into one file." } },
   { for: "all", icon: "🛠", t: { mr: "समस्या आल्यास", hi: "समस्या आने पर", en: "Troubleshooting" },
     body: {
       mr: "Telegram मेसेज येत नाही? आधी बॉटला /start केलंय का ते तपासा. Draw अडतो? कोणाचा UPI ID रिकामा आहे ते बघा (नाव दिसेल). काहीतरी अडकलं? Logout करून पुन्हा Login करा — डेटाबेसमधलं काहीच बदलत नाही, फक्त फोनवरचा जुना session साफ होतो.",
@@ -2191,7 +2241,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 let _updateShown = false;
 async function checkForUpdate() {
   if (_updateShown) return;
@@ -2205,16 +2255,22 @@ async function checkForUpdate() {
 function showUpdateBanner() {
   if (_updateShown) return;
   _updateShown = true;
-  const bar = document.createElement("div");
-  bar.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#14432E;color:#F6EFDD;display:flex;align-items:center;justify-content:center;gap:12px;padding:11px 14px;font-size:13px;box-shadow:0 -2px 12px rgba(0,0,0,.25);";
-  bar.innerHTML = "<span>🔄 नवीन आवृत्ती आली आहे • New version available</span>";
+  // मधोमध modal — कोणाचंही दुर्लक्ष होऊ नये म्हणून
+  const ov = document.createElement("div");
+  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(20,20,15,.55);display:flex;align-items:center;justify-content:center;padding:24px;";
+  const card = document.createElement("div");
+  card.style.cssText = "background:#F6EFDD;color:#14432E;border-radius:16px;max-width:340px;width:100%;padding:24px 22px;text-align:center;box-shadow:0 12px 44px rgba(0,0,0,.35);";
+  card.innerHTML = '<div style="font-size:38px;line-height:1;margin-bottom:8px;">🔄</div>'
+    + '<div style="font-weight:700;font-size:17px;margin-bottom:4px;">नवीन आवृत्ती आली आहे</div>'
+    + '<div style="font-size:13px;color:#6b6350;margin-bottom:18px;">New version available — कृपया रिफ्रेश करा</div>';
   const btn = document.createElement("button");
-  btn.textContent = "रिफ्रेश / Refresh";
-  btn.style.cssText = "background:#C6A052;color:#3a2a08;border:none;border-radius:14px;padding:6px 16px;font-weight:700;cursor:pointer;white-space:nowrap;";
+  btn.textContent = "रिफ्रेश करा / Refresh";
+  btn.style.cssText = "background:#14432E;color:#F6EFDD;border:none;border-radius:12px;padding:12px 22px;font-weight:700;font-size:14px;cursor:pointer;width:100%;";
   // iOS + Android दोन्हीकडे ताजी HTML मिळावी म्हणून cache-bypass navigation (नुसतं reload केल्यास iOS जुनीच cached देतं)
   btn.onclick = () => { location.replace(location.pathname + "?u=" + Date.now()); };
-  bar.appendChild(btn);
-  document.body.appendChild(bar);
+  card.appendChild(btn);
+  ov.appendChild(card);
+  document.body.appendChild(ov);
 }
 checkForUpdate();
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkForUpdate(); });

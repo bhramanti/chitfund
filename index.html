@@ -1220,13 +1220,15 @@ async function checkWinnerAlerts() {
     if (!alerts || !alerts.length) return;
     const seenKey = "cf_seen_alerts_" + session.id;
     const seen = JSON.parse(localStorage.getItem(seenKey) || "[]");
-    // सर्वात अलीकडचा न-बघितलेला विजेता
-    const fresh = alerts.find(a => !seen.includes(a.round_id));
-    if (!fresh) return;
-    showWinnerModal(fresh, () => {
-      seen.push(fresh.round_id);
-      localStorage.setItem(seenKey, JSON.stringify(seen.slice(-50)));
-    });
+    // सध्याच्या सगळ्या फेऱ्या seen म्हणून नोंदवा — म्हणजे जुन्या चिठ्ठ्या पुन्हा-पुन्हा popup होणार नाहीत
+    const markAllSeen = () => {
+      const merged = Array.from(new Set(seen.concat(alerts.map(a => a.round_id))));
+      localStorage.setItem(seenKey, JSON.stringify(merged.slice(-100)));
+    };
+    // फक्त सर्वात अलीकडची चिठ्ठी, आणि तीही न बघितली असेल तरच — एकदाच
+    const latest = alerts[0];
+    if (seen.includes(latest.round_id)) { markAllSeen(); return; }
+    showWinnerModal(latest, markAllSeen);
   } catch (e) {}
 }
 
@@ -2184,7 +2186,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 1;
+const APP_VERSION = 2;
 let _updateShown = false;
 async function checkForUpdate() {
   if (_updateShown) return;
@@ -2204,12 +2206,15 @@ function showUpdateBanner() {
   const btn = document.createElement("button");
   btn.textContent = "रिफ्रेश / Refresh";
   btn.style.cssText = "background:#C6A052;color:#3a2a08;border:none;border-radius:14px;padding:6px 16px;font-weight:700;cursor:pointer;white-space:nowrap;";
-  btn.onclick = () => location.reload();
+  // iOS + Android दोन्हीकडे ताजी HTML मिळावी म्हणून cache-bypass navigation (नुसतं reload केल्यास iOS जुनीच cached देतं)
+  btn.onclick = () => { location.replace(location.pathname + "?u=" + Date.now()); };
   bar.appendChild(btn);
   document.body.appendChild(bar);
 }
 checkForUpdate();
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkForUpdate(); });
+window.addEventListener("pageshow", checkForUpdate);  // iOS standalone PWA resume
+window.addEventListener("focus", checkForUpdate);
 setInterval(checkForUpdate, 5 * 60 * 1000);
 
 /* ---------------- boot ---------------- */

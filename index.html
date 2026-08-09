@@ -2182,6 +2182,36 @@ function renderGuide(backTo) {
   render();
 }
 
+/* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
+   प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
+const APP_VERSION = 1;
+let _updateShown = false;
+async function checkForUpdate() {
+  if (_updateShown) return;
+  try {
+    const r = await fetch("version.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j && typeof j.v === "number" && j.v > APP_VERSION) showUpdateBanner();
+  } catch (e) {}
+}
+function showUpdateBanner() {
+  if (_updateShown) return;
+  _updateShown = true;
+  const bar = document.createElement("div");
+  bar.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#14432E;color:#F6EFDD;display:flex;align-items:center;justify-content:center;gap:12px;padding:11px 14px;font-size:13px;box-shadow:0 -2px 12px rgba(0,0,0,.25);";
+  bar.innerHTML = "<span>🔄 नवीन आवृत्ती आली आहे • New version available</span>";
+  const btn = document.createElement("button");
+  btn.textContent = "रिफ्रेश / Refresh";
+  btn.style.cssText = "background:#C6A052;color:#3a2a08;border:none;border-radius:14px;padding:6px 16px;font-weight:700;cursor:pointer;white-space:nowrap;";
+  btn.onclick = () => location.reload();
+  bar.appendChild(btn);
+  document.body.appendChild(bar);
+}
+checkForUpdate();
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkForUpdate(); });
+setInterval(checkForUpdate, 5 * 60 * 1000);
+
 /* ---------------- boot ---------------- */
 // ?signup असलेल्या शेअर-लिंकवरून आल्यास थेट Sign up फॉर्म उघडा
 const wantsSignup = new URLSearchParams(location.search).has("signup");

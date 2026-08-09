@@ -1706,6 +1706,7 @@ async function renderAdminTab() {
         <h2>${T('adminTab.broadcastHeading')}</h2>
         <p class="desc">${T('adminTab.broadcastDesc')}</p>
         <textarea id="bcText" rows="5" placeholder="${T('adminTab.broadcastPlaceholder')}"></textarea>
+        <p class="desc" style="margin-top:4px;font-size:12px;">✏️ <b>*ठळक*</b> · <i>_तिरकं_</i> · <s>~खोडलेलं~</s> · <code>\`कोड\`</code></p>
         <button class="btn" id="bcBtn">${T('adminTab.sendBtn')}</button>
         <div id="bcResult" style="margin-top:8px;"></div>
       </div>
@@ -1722,6 +1723,7 @@ async function renderAdminTab() {
           </label>`).join('')}
         </div>
         <textarea id="smText" rows="5" placeholder="${T('adminTab.writeMessage')}"></textarea>
+        <p class="desc" style="margin-top:4px;font-size:12px;">✏️ <b>*ठळक*</b> · <i>_तिरकं_</i> · <s>~खोडलेलं~</s> · <code>\`कोड\`</code></p>
         <button class="btn" id="smBtn">${T('adminTab.sendSelected')}</button>
         <div id="smResult" style="margin-top:8px;"></div>
       </div>
@@ -2221,7 +2223,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 let _updateShown = false;
 async function checkForUpdate() {
   if (_updateShown) return;

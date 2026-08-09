@@ -58,10 +58,11 @@
   .card p.desc{color:var(--muted);font-size:12.5px;margin:0 0 12px;}
 
   label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px;}
-  input[type=text],input[type=number],input[type=tel],input[type=password]{
+  input[type=text],input[type=number],input[type=tel],input[type=password],textarea{
     width:100%;font-size:16px;padding:11px 12px;border:1px solid var(--line);background:var(--paper);border-radius:6px;color:var(--ink);
   }
-  input:focus{outline:2px solid var(--navy);}
+  textarea{font-family:var(--font-body);line-height:1.5;min-height:96px;resize:vertical;display:block;}
+  input:focus,textarea:focus{outline:2px solid var(--navy);}
   .file-btn{display:block;width:100%;text-align:center;padding:11px;border:1px dashed var(--line);border-radius:6px;font-size:13px;color:var(--muted);cursor:pointer;background:var(--paper);}
   .qr-preview{width:70px;height:70px;object-fit:cover;border-radius:6px;border:1px solid var(--line);margin-top:8px;}
 
@@ -1704,7 +1705,7 @@ async function renderAdminTab() {
       <div class="card">
         <h2>${T('adminTab.broadcastHeading')}</h2>
         <p class="desc">${T('adminTab.broadcastDesc')}</p>
-        <input type="text" id="bcText" placeholder="${T('adminTab.broadcastPlaceholder')}">
+        <textarea id="bcText" rows="5" placeholder="${T('adminTab.broadcastPlaceholder')}"></textarea>
         <button class="btn" id="bcBtn">${T('adminTab.sendBtn')}</button>
         <div id="bcResult" style="margin-top:8px;"></div>
       </div>
@@ -1720,7 +1721,7 @@ async function renderAdminTab() {
             <span>${crown(p.name)} ${(p.telegram_id>0)?'':`<small>${T('adminTab.noTgTag')}</small>`}</span>
           </label>`).join('')}
         </div>
-        <input type="text" id="smText" placeholder="${T('adminTab.writeMessage')}">
+        <textarea id="smText" rows="5" placeholder="${T('adminTab.writeMessage')}"></textarea>
         <button class="btn" id="smBtn">${T('adminTab.sendSelected')}</button>
         <div id="smResult" style="margin-top:8px;"></div>
       </div>
@@ -2220,7 +2221,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 5;
+const APP_VERSION = 6;
 let _updateShown = false;
 async function checkForUpdate() {
   if (_updateShown) return;

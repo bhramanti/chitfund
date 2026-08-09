@@ -401,10 +401,10 @@ function esc(v) {
 }
 // मालक (master admin) चं नाव सगळीकडे 👑 सह दाखवा
 const MASTER_NAME = "Sagar Shinde";
-const ORGANIZER_NAME = "Tanmay Meher";   // आयोजक — नावावरून टॅग (V1 पुरतं; रोल-सिस्टम V2 ला)
+const ORGANIZER_NAMES = ["tanmay meher", "tanmay mehar"];   // आयोजक — नावावरून टॅग (case-insensitive; रोल-सिस्टम V2 ला)
 function crown(name) {
   const n = (name || "").trim();
-  return esc(name) + (n === MASTER_NAME ? " 👑" : "") + (n === ORGANIZER_NAME ? " 🧑‍💼" : "");
+  return esc(name) + (n === MASTER_NAME ? " 👑" : "") + (ORGANIZER_NAMES.includes(n.toLowerCase()) ? " 🧑‍💼" : "");
 }
 
 /* ---------------- UI helpers ---------------- */
@@ -1324,14 +1324,16 @@ async function renderFundsTab() {
     let html = "";
     if (session.role === "admin") {
       html += `
-        <div class="card">
-          <h2>${T('fundsTab.newFundHeading')}</h2>
+        <details class="card acc" ${list.length ? '' : 'open'}>
+          <summary>${T('fundsTab.newFundHeading')}</summary>
+          <div class="acc-body">
           <label>${T('fundsTab.nameLabel')}</label>
           <input type="text" id="nfName" placeholder="${T('fundsTab.namePlaceholder')}">
           <label>${T('fundsTab.instLabel')}</label>
           <input type="number" id="nfInst" placeholder="${T('fundsTab.instPlaceholder')}">
           <button class="btn" id="nfBtn">${T('fundsTab.createBtn')}</button>
-        </div>`;
+          </div>
+        </details>`;
     }
     html += `<h3 class="section-h">${T('fundsTab.yourFunds')}</h3>`;
     if (!list.length) html += session.role === "admin"
@@ -2237,7 +2239,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 let _updateShown = false, _updateChecking = false;
 async function checkForUpdate() {
   if (_updateShown || _updateChecking) return;

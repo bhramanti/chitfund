@@ -553,7 +553,7 @@ const UI_STRINGS = {
       collectionHeading: (m, paid, total) => `महिना ${m} — वसुली (${paid}/${total})`,
       overdueTag: "थकीत ⚠️", viewProofTitle: "पेमेंट स्क्रीनशॉट बघा",
       paidTag: "भरला ✓", unpaidTapTag: "बाकी — टॅप करा", unpaidTag: "बाकी",
-      remindBtn: "⏰ बाकी असलेल्यांना रिमाइंडर", resendBtn: "🔁 QR पुन्हा पाठवा",
+      remindBtn: "⏰ बाकी असलेल्यांना रिमाइंडर", resendBtn: "📤 निकाल सर्वांना पाठवा",
       shareLedgerBtn: "📒 हिशोब Telegram वर शेअर करा",
       sendToWinnerHeading: "💳 विजेत्याला पैसे पाठवा",
       winnerLine: (name, amt) => `विजेता: <b>${name}</b> — रक्कम ₹${amt}`,
@@ -567,10 +567,10 @@ const UI_STRINGS = {
       noOneSelected: "कोणी निवडलेलं नाही",
       memberAddedCatchUp: (n) => `मेंबर जोडला — मागील ${n} हप्ते catch-up म्हणून बाकी नोंदवले`,
       memberAdded: "मेंबर जोडला",
-      drawnToast: (name) => `चिठ्ठी निघाली: ${name} — सर्वांना Telegram वर सूचना गेली`,
+      drawnToast: (name) => `चिठ्ठी निघाली: ${name} — आता '📤 निकाल सर्वांना पाठवा' दाबून सूचना पाठवा`,
       noneAvailable: "कोणी उपलब्ध नाही", selectMember: "मेंबर निवडा",
       manualConfirm: (name) => `"${name}" ला या महिन्याचा विजेता ठरवायचं? सर्वांना Telegram वर "Admin निवड" असं स्पष्ट कळेल.`,
-      manualDrawnToast: (name) => `"${name}" ला विजेता ठरवलं — सर्वांना Telegram वर सूचना गेली`,
+      manualDrawnToast: (name) => `"${name}" ला विजेता ठरवलं — आता '📤 निकाल सर्वांना पाठवा' दाबून सूचना पाठवा`,
       undoConfirm: (m) => `महिना ${m} ची चिठ्ठी रद्द करायची? विजेता व त्या फेरीचे पेमेंट रेकॉर्ड मिटतील.`,
       undone: "चिठ्ठी रद्द झाली",
       remindSent: (n) => `${n} जणांना रिमाइंडर गेला`,
@@ -746,7 +746,7 @@ const UI_STRINGS = {
       collectionHeading: (m, paid, total) => `महीना ${m} — वसूली (${paid}/${total})`,
       overdueTag: "बाकी ⚠️", viewProofTitle: "पेमेंट स्क्रीनशॉट देखें",
       paidTag: "भरा ✓", unpaidTapTag: "बाकी — टैप करें", unpaidTag: "बाकी",
-      remindBtn: "⏰ बाकी वालों को रिमाइंडर", resendBtn: "🔁 QR फिर भेजें",
+      remindBtn: "⏰ बाकी वालों को रिमाइंडर", resendBtn: "📤 नतीजा सबको भेजें",
       shareLedgerBtn: "📒 हिसाब Telegram पर शेयर करें",
       sendToWinnerHeading: "💳 विजेता को पैसे भेजें",
       winnerLine: (name, amt) => `विजेता: <b>${name}</b> — राशि ₹${amt}`,
@@ -760,10 +760,10 @@ const UI_STRINGS = {
       noOneSelected: "कोई चुना नहीं गया",
       memberAddedCatchUp: (n) => `मेंबर जुड़ गया — पिछली ${n} किश्तें catch-up के रूप में बाकी दर्ज हुईं`,
       memberAdded: "मेंबर जुड़ गया",
-      drawnToast: (name) => `चिट्ठी निकली: ${name} — सभी को Telegram पर सूचना गई`,
+      drawnToast: (name) => `चिट्ठी निकली: ${name} — अब '📤 नतीजा सबको भेजें' दबाकर सूचना भेजें`,
       noneAvailable: "कोई उपलब्ध नहीं", selectMember: "मेंबर चुनें",
       manualConfirm: (name) => `"${name}" को इस महीने का विजेता तय करना है? सभी को Telegram पर "Admin चुनाव" ऐसा स्पष्ट पता चलेगा.`,
-      manualDrawnToast: (name) => `"${name}" को विजेता तय किया — सभी को Telegram पर सूचना गई`,
+      manualDrawnToast: (name) => `"${name}" को विजेता तय किया — अब '📤 नतीजा सबको भेजें' दबाकर सूचना भेजें`,
       undoConfirm: (m) => `महीना ${m} की चिट्ठी रद्द करनी है? विजेता और उस राउंड के पेमेंट रिकॉर्ड मिट जाएंगे.`,
       undone: "चिट्ठी रद्द हो गई",
       remindSent: (n) => `${n} लोगों को रिमाइंडर गया`,
@@ -939,7 +939,7 @@ const UI_STRINGS = {
       collectionHeading: (m, paid, total) => `Month ${m} — collection (${paid}/${total})`,
       overdueTag: "Overdue ⚠️", viewProofTitle: "View payment screenshot",
       paidTag: "Paid ✓", unpaidTapTag: "Unpaid — tap here", unpaidTag: "Unpaid",
-      remindBtn: "⏰ Remind those unpaid", resendBtn: "🔁 Resend QR",
+      remindBtn: "⏰ Remind those unpaid", resendBtn: "📤 Share result with all",
       shareLedgerBtn: "📒 Share ledger on Telegram",
       sendToWinnerHeading: "💳 Send money to the winner",
       winnerLine: (name, amt) => `Winner: <b>${name}</b> — amount ₹${amt}`,
@@ -953,10 +953,10 @@ const UI_STRINGS = {
       noOneSelected: "No one selected",
       memberAddedCatchUp: (n) => `Member added — the previous ${n} installments were recorded as catch-up dues`,
       memberAdded: "Member added",
-      drawnToast: (name) => `Draw complete: ${name} — everyone notified on Telegram`,
+      drawnToast: (name) => `Draw complete: ${name} — now tap '📤 Share result with all' to notify`,
       noneAvailable: "No one available", selectMember: "Select a member",
       manualConfirm: (name) => `Set "${name}" as this month's winner? Everyone will clearly see "Admin pick" on Telegram.`,
-      manualDrawnToast: (name) => `"${name}" set as winner — everyone notified on Telegram`,
+      manualDrawnToast: (name) => `"${name}" set as winner — now tap '📤 Share result with all' to notify`,
       undoConfirm: (m) => `Undo the month ${m} draw? The winner and that round's payment records will be erased.`,
       undone: "Draw undone",
       remindSent: (n) => `Reminder sent to ${n} people`,
@@ -1479,7 +1479,7 @@ async function renderFundDetail(fundId) {
       if (isAdmin && paidCount < members.length) {
         html += `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
           <button class="btn maroon" id="remindBtn" style="margin-top:0;flex:1;">${T('fundDetail.remindBtn')}</button>
-          <button class="btn secondary" id="resendBtn" style="margin-top:0;flex:1;">${T('fundDetail.resendBtn')}</button>
+          <button class="btn green" id="resendBtn" style="margin-top:0;flex:1;">${T('fundDetail.resendBtn')}</button>
         </div>`;
       }
       if (isAdmin) {
@@ -1613,7 +1613,7 @@ async function renderFundDetail(fundId) {
     if (resendBtn && lastRound) resendBtn.onclick = async () => {
       resendBtn.disabled = true; resendBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
       try {
-        const { sent, failed } = await api("resendWinnerInfo", { profile_id: session.id, round_id: lastRound.id });
+        const { sent, failed } = await api("shareResult", { profile_id: session.id, round_id: lastRound.id });
         toast(failed && failed.length ? T('fundDetail.resendPartial')(sent, failed.length) : T('fundDetail.resendSent')(sent));
       }
       catch (e) { toast(e.message); }
@@ -2250,7 +2250,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 8;
+const APP_VERSION = 9;
 let _updateShown = false;
 async function checkForUpdate() {
   if (_updateShown) return;

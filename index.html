@@ -1725,10 +1725,6 @@ async function renderAdminTab() {
         <div id="smResult" style="margin-top:8px;"></div>
       </div>
       <div class="card">
-        <button class="btn secondary" id="notifyLoginBtn">${T('adminTab.notifyLoginBtn')}</button>
-        <div id="nlResult" style="margin-top:8px;"></div>
-      </div>
-      <div class="card">
         <h2>${T('adminTab.exportHeading')}</h2>
         <p class="desc">${T('adminTab.exportDesc')}</p>
         <button class="btn secondary" id="exportBtn">${T('adminTab.exportBtn')}</button>
@@ -1876,23 +1872,6 @@ async function renderAdminTab() {
       }
       catch (e) { toast(e.message); }
       bcBtn.disabled = false; bcBtn.textContent = T('adminTab.sendBtn');
-    };
-
-    const notifyLoginBtn = document.getElementById("notifyLoginBtn");
-    if (notifyLoginBtn) notifyLoginBtn.onclick = async () => {
-      if (!confirm(T('adminTab.notifyLoginConfirm'))) return;
-      notifyLoginBtn.disabled = true; notifyLoginBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
-      const nlResult = document.getElementById("nlResult");
-      nlResult.innerHTML = "";
-      try {
-        const { sent, failed } = await api("notifyLoginChange", { profile_id: session.id });
-        toast(T('adminTab.notifyLoginSent')(sent));
-        if (failed && failed.length) {
-          nlResult.innerHTML = `<div class="error-box">${T('adminTab.broadcastFailedHeading')(failed.length)}<br>${failed.map(f => esc(f)).join('<br>')}</div>`;
-        }
-      }
-      catch (e) { toast(e.message); }
-      notifyLoginBtn.disabled = false; notifyLoginBtn.textContent = T('adminTab.notifyLoginBtn');
     };
 
     const smAll = document.getElementById("smAll");
@@ -2191,9 +2170,9 @@ const GUIDE_SECTIONS = [
       en: "'Pending Sign-up Requests' — approve/reject. 'सर्व Approved मेंबर' — Edit, Delete (the Admin toggle now lives inside Edit). Opening Edit lets you change name, phone (this is now their login — tell the member if you change it), UPI, Telegram ID, language, PIN, and role — all in one form. Delete only works for members not yet in a fund where the draw has started. 'मेंबर थेट जोडा' creates a member without them signing up (mobile number required) — right after adding, a 'share login details' card opens; Copy/Share it and send it to the member via WhatsApp/SMS. Use the '🔐 Notify everyone of the new login method' button (next section) to send all existing members a one-time notice that login is now by mobile number." } },
   { for: "admin", icon: "📊", t: { mr: "आढावा, Broadcast, Export (Admin)", hi: "आढावा, Broadcast, Export (Admin)", en: "Overview, broadcast, export (Admin)" },
     body: {
-      mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं. 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना एकत्र Telegram मेसेज पाठवतं (auto-translate होत नाही, जसा टाईप कराल तसा). '🎯 निवडक सदस्यांना मेसेज' — यात एक, काही किंवा 'सर्व निवडा' करून हवे त्यांनाच मेसेज पाठवता येतो (checkbox ने निवडा). दोन्हींमध्ये कोणाला गेला नाही ते खाली दिसतं. '🔐 सर्व सदस्यांना नवीन लॉगिन कळवा' — जुन्या सदस्यांना लॉगिन-बदलाची एकवेळची सूचना. 'CSV डाउनलोड करा' सगळा डेटा एका फाईलमध्ये देतं.",
-      hi: "'एकत्रित आढावा' सभी फंड की कुल जानकारी दिखाता है। 'सर्वांना मेसेज पाठवा' सभी approved मेंबर को एक साथ Telegram मेसेज भेजता है (auto-translate नहीं होता)। '🎯 चुनिंदा सदस्यों को मेसेज' — इसमें एक, कुछ या 'सभी चुनें' करके सिर्फ चुने हुए लोगों को मेसेज भेज सकते हैं (checkbox से चुनें)। दोनों में किसे नहीं गया वह नीचे दिखता है। '🔐 सभी सदस्यों को नया लॉगिन बताएं' — पुराने सदस्यों को लॉगिन-बदलाव की एकबारगी सूचना। 'CSV डाउनलोड करा' सारा डेटा एक फाइल में देता है।",
-      en: "'एकत्रित आढावा' shows totals across all funds. 'सर्वांना मेसेज पाठवा' sends a Telegram message to every approved member at once (not auto-translated). '🎯 Message selected members' lets you pick one, some, or 'Select all' and message only those (tick the checkboxes). In both, anyone it failed to reach shows below. '🔐 Notify everyone of the new login method' sends existing members a one-time login-change notice. 'CSV डाउनलोड करा' exports all data into one file." } },
+      mr: "'एकत्रित आढावा' सगळ्या फंडांची बेरीज दाखवतं. 'सर्वांना मेसेज पाठवा' सगळ्या approved मेंबरना एकत्र Telegram मेसेज पाठवतं (auto-translate होत नाही, जसा टाईप कराल तसा). '🎯 निवडक सदस्यांना मेसेज' — यात एक, काही किंवा 'सर्व निवडा' करून हवे त्यांनाच मेसेज पाठवता येतो (checkbox ने निवडा). दोन्हींमध्ये कोणाला गेला नाही ते खाली दिसतं. 'CSV डाउनलोड करा' सगळा डेटा एका फाईलमध्ये देतं.",
+      hi: "'एकत्रित आढावा' सभी फंड की कुल जानकारी दिखाता है। 'सर्वांना मेसेज पाठवा' सभी approved मेंबर को एक साथ Telegram मेसेज भेजता है (auto-translate नहीं होता)। '🎯 चुनिंदा सदस्यों को मेसेज' — इसमें एक, कुछ या 'सभी चुनें' करके सिर्फ चुने हुए लोगों को मेसेज भेज सकते हैं (checkbox से चुनें)। दोनों में किसे नहीं गया वह नीचे दिखता है। 'CSV डाउनलोड करा' सारा डेटा एक फाइल में देता है।",
+      en: "'एकत्रित आढावा' shows totals across all funds. 'सर्वांना मेसेज पाठवा' sends a Telegram message to every approved member at once (not auto-translated). '🎯 Message selected members' lets you pick one, some, or 'Select all' and message only those (tick the checkboxes). In both, anyone it failed to reach shows below. 'CSV डाउनलोड करा' exports all data into one file." } },
   { for: "all", icon: "🛠", t: { mr: "समस्या आल्यास", hi: "समस्या आने पर", en: "Troubleshooting" },
     body: {
       mr: "Telegram मेसेज येत नाही? आधी बॉटला /start केलंय का ते तपासा. Draw अडतो? कोणाचा UPI ID रिकामा आहे ते बघा (नाव दिसेल). काहीतरी अडकलं? Logout करून पुन्हा Login करा — डेटाबेसमधलं काहीच बदलत नाही, फक्त फोनवरचा जुना session साफ होतो.",
@@ -2241,7 +2220,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 let _updateShown = false;
 async function checkForUpdate() {
   if (_updateShown) return;

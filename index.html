@@ -391,6 +391,11 @@ function esc(v) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+// मालक (master admin) चं नाव सगळीकडे 👑 सह दाखवा
+const MASTER_NAME = "Sagar Shinde";
+function crown(name) {
+  return esc(name) + (((name || "").trim() === MASTER_NAME) ? " 👑" : "");
+}
 
 /* ---------------- UI helpers ---------------- */
 // यादीसारखी skeleton (list loading साठी)
@@ -1240,7 +1245,7 @@ function showWinnerModal(a, onClose) {
       <div class="party">🎉</div>
       <h2>${esc(a.fund_name)}</h2>
       <p>${T('winnerModal.monthDraw')(a.month_number)}</p>
-      <div class="wname">${a.is_me ? T('winnerModal.youWon') : esc(a.winner_name)}</div>
+      <div class="wname">${a.is_me ? T('winnerModal.youWon') : crown(a.winner_name)}</div>
       <div class="amt-big">₹${Number(a.amount).toLocaleString('en-IN')}</div>
       <p>${a.is_me ? T('winnerModal.othersPaid') : T('winnerModal.sendToWinner')}</p>
       <button class="btn" id="modalOk">${T('winnerModal.ok')}</button>
@@ -1375,7 +1380,7 @@ async function renderFundDetail(fundId) {
     html += `<h3 class="section-h">${T('fundDetail.membersHeading')(members.length)}</h3><div class="card">`;
     html += members.length ? members.map(m => `
       <div class="list-item">
-        <div><div class="who">${esc(m.name)}${m.id===session.id?T('common.you'):''}</div><div class="meta">${esc(m.phone)||''}</div></div>
+        <div><div class="who">${crown(m.name)}${m.id===session.id?T('common.you'):''}</div><div class="meta">${esc(m.phone)||''}</div></div>
         <span class="tag ${wonIds.has(m.id)?'won':'wait'}">${wonIds.has(m.id)?T('common.won'):T('common.waiting')}</span>
       </div>`).join('') : emptyState("👥", T('fundDetail.noMembers'), isAdmin ? T('fundDetail.noMembersAdminSub') : T('fundDetail.noMembersMemberSub'));
     html += `</div>`;
@@ -1392,7 +1397,7 @@ async function renderFundDetail(fundId) {
             <div id="manualDrawBox" style="display:none;width:100%;margin-top:10px;text-align:left;">
               <label>${T('fundDetail.manualDrawSelectLabel')}</label>
               <select id="manualDrawSelect" style="width:100%;padding:11px;border-radius:6px;border:1px solid var(--line);font-size:14px;background:var(--paper);">
-                ${eligible.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}
+                ${eligible.map(m => `<option value="${m.id}">${crown(m.name)}</option>`).join('')}
               </select>
               <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0;">${T('fundDetail.manualDrawNote')}</p>
               <button class="btn maroon" id="manualDrawConfirmBtn" style="margin-top:8px;">${T('fundDetail.manualDrawConfirmBtn')}</button>
@@ -1414,7 +1419,7 @@ async function renderFundDetail(fundId) {
         const overdue = p ? !!p.overdue : false;
         const canToggle = isAdmin || m.id === session.id;
         return `<div class="list-item">
-          <div><div class="who">${esc(m.name)}${m.id===lastRound.winner_profile_id?' 🏆':''}</div><div class="meta amt">₹${Number(fund.installment).toLocaleString('en-IN')}</div></div>
+          <div><div class="who">${crown(m.name)}${m.id===lastRound.winner_profile_id?' 🏆':''}</div><div class="meta amt">₹${Number(fund.installment).toLocaleString('en-IN')}</div></div>
           ${overdue ? `<span class="tag unpaid" style="margin-right:4px;">${T('fundDetail.overdueTag')}</span>` : ''}
           ${p && p.proof_url ? `<a href="${p.proof_url}" target="_blank" rel="noopener" style="margin-right:4px;font-size:16px;text-decoration:none;" title="${T('fundDetail.viewProofTitle')}">🧾</a>` : ''}
           ${canToggle ? `<span class="tag ${paid?'paid':'unpaid'}" style="cursor:pointer" data-toggle-pay="${m.id}" data-round="${lastRound.id}" data-paid="${paid}">${paid?T('fundDetail.paidTag'):T('fundDetail.unpaidTapTag')}</span>`
@@ -1435,7 +1440,7 @@ async function renderFundDetail(fundId) {
         html += `
           <div class="card">
             <h2>${T('fundDetail.sendToWinnerHeading')}</h2>
-            <p class="desc">${T('fundDetail.winnerLine')(esc(winner.name), Number(fund.installment).toLocaleString('en-IN'))}</p>
+            <p class="desc">${T('fundDetail.winnerLine')(crown(winner.name), Number(fund.installment).toLocaleString('en-IN'))}</p>
             <div class="qr-share-box">
               ${winner.qr_url ? `<img src="${winner.qr_url}">` : ''}
               <div style="font-size:13px;"><b>${T('fundDetail.upiIdLabel')}</b><br>${esc(winner.upi_id) || T('common.notGiven')}</div>
@@ -1449,7 +1454,7 @@ async function renderFundDetail(fundId) {
       const w = members.find(m => m.id === r.winner_profile_id);
       const rp = payments.filter(p => p.round_id === r.id && p.paid).length;
       return `<div class="list-item">
-        <div><div class="who">${T('fundDetail.recordLine')(r.month_number, w?esc(w.name):'—')}${r.is_manual ? ` <span class="tag wait" style="font-size:9px;">${T('common.adminPick')}</span>` : ''}</div><div class="meta">${T('fundDetail.collectedOf')(rp, members.length)}</div></div>
+        <div><div class="who">${T('fundDetail.recordLine')(r.month_number, w?crown(w.name):'—')}${r.is_manual ? ` <span class="tag wait" style="font-size:9px;">${T('common.adminPick')}</span>` : ''}</div><div class="meta">${T('fundDetail.collectedOf')(rp, members.length)}</div></div>
         <span class="amt">₹${Number(r.amount).toLocaleString('en-IN')}</span>
       </div>`;
     }).join('') : emptyState("🎟", T('fundDetail.noDraws'), isAdmin ? T('fundDetail.noDrawsAdminSub') : T('fundDetail.noDrawsMemberSub'));
@@ -1468,7 +1473,7 @@ async function renderFundDetail(fundId) {
         const memberIds = new Set(members.map(m => m.id));
         const avail = allProfiles.filter(p => !memberIds.has(p.id));
         const sel = document.getElementById("addMemberSelect");
-        sel.innerHTML = avail.length ? avail.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('') : `<option value="">${T('fundDetail.noneAvailable')}</option>`;
+        sel.innerHTML = avail.length ? avail.map(p => `<option value="${p.id}">${crown(p.name)}</option>`).join('') : `<option value="">${T('fundDetail.noneAvailable')}</option>`;
         document.getElementById("addMemberBtn").onclick = async () => {
           const target_id = sel.value;
           if (!target_id) return toast(T('fundDetail.noOneSelected'));
@@ -1490,7 +1495,7 @@ async function renderFundDetail(fundId) {
         try {
           await new Promise(r => setTimeout(r, 1300));
           const { winner } = await api("drawWinner", { profile_id: session.id, fund_id: fundId });
-          stage.innerHTML = `<div class="winner-stamp">🎉 ${esc(winner.name)}</div>`;
+          stage.innerHTML = `<div class="winner-stamp">🎉 ${crown(winner.name)}</div>`;
           toast(T('fundDetail.drawnToast')(winner.name));
           setTimeout(() => renderFundDetail(fundId), 1600);
         } catch (e) { toast(e.message); drawBtn.disabled = false; stage.innerHTML=''; }
@@ -1728,7 +1733,7 @@ async function renderAdminTab() {
     html += `<h3 class="section-h">${T('adminTab.pendingHeading')(pending.length)}</h3><div class="card">`;
     html += pending.length ? pending.map(p => `
       <div class="list-item">
-        <div><div class="who">${esc(p.name)}</div><div class="meta">📞 ${esc(p.phone)||'-'} · TG: ${esc(p.telegram_id)}</div></div>
+        <div><div class="who">${crown(p.name)}</div><div class="meta">📞 ${esc(p.phone)||'-'} · TG: ${esc(p.telegram_id)}</div></div>
         <div style="display:flex;gap:6px;">
           <button class="small-btn" data-approve="${p.id}">${T('common.approve')}</button>
           <button class="small-btn maroon" data-reject="${p.id}">${T('common.reject')}</button>
@@ -1739,7 +1744,7 @@ async function renderAdminTab() {
     html += `<h3 class="section-h">${T('adminTab.approvedHeading')(approved.length)}</h3><div class="card">`;
     html += approved.map(p => `
       <div class="list-item">
-        <div><div class="who">${esc(p.name)} ${p.is_master?'🔒':(p.role==='admin'?'👑':'')}</div></div>
+        <div><div class="who">${crown(p.name)}${(p.role==='admin' && !p.is_master)?' 👑':''}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
           <button class="small-btn secondary" data-edit="${p.id}">${T('common.edit')}</button>
           ${(p.id===session.id || p.is_master) ? '' : `<button class="small-btn maroon" data-del="${p.id}">${T('common.del')}</button>`}
@@ -1881,7 +1886,7 @@ function openEditMember(p) {
   const box = document.createElement("div");
   box.className = "card";
   box.innerHTML = `
-    <h2>${T('editMember.heading')(esc(p.name))}</h2>
+    <h2>${T('editMember.heading')(crown(p.name))}</h2>
     <p class="desc">${T('editMember.desc')}</p>
     <label>${T('editMember.fullNameLabel')}</label>
     <input type="text" id="emName" value="${(p.name||'').replace(/"/g,'&quot;')}">
@@ -1967,7 +1972,7 @@ function renderProfileTab() {
   main.innerHTML = `
     ${!hasUpi ? `<div class="error-box">${T('profileTab.upiMissingWarning')}</div>` : ''}
     <div class="card">
-      <h2>${esc(session.name)}</h2>
+      <h2>${crown(session.name)}</h2>
       <p class="desc">${session.role === 'admin' ? '👑 ' + T('common.admin') : T('common.member')}</p>
       <div class="list-item"><div class="who">${T('profileTab.phoneLabel')}</div><div class="meta">${esc(session.phone)||'-'}</div></div>
       <div class="list-item"><div class="who">${T('profileTab.tidLabel')}</div><div class="meta">${(session.telegram_id && session.telegram_id > 0) ? esc(session.telegram_id) : '-'}</div></div>
@@ -2186,7 +2191,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 2;
+const APP_VERSION = 3;
 let _updateShown = false;
 async function checkForUpdate() {
   if (_updateShown) return;

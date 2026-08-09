@@ -53,6 +53,13 @@
   main{flex:1; padding:16px 16px 90px; overflow-y:auto;}
 
   .card{background:var(--paper-deep);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:14px;position:relative;}
+  details.acc{padding:0;}
+  details.acc>summary{list-style:none;cursor:pointer;padding:15px 16px;font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  details.acc>summary::-webkit-details-marker{display:none;}
+  details.acc>summary::after{content:"▸";color:var(--muted);font-weight:400;font-size:14px;transition:transform .2s;}
+  details.acc[open]>summary::after{transform:rotate(90deg);}
+  details.acc .acc-body{padding:0 16px 16px;}
+  details.acc .acc-body>h2:first-child,details.acc .acc-body>.desc:first-child{margin-top:0;}
   .card::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;background:var(--maroon);opacity:.5;border-radius:2px;}
   .card h2{font-family:var(--font-display);font-size:17px;margin:0 0 6px;color:var(--navy);}
   .card p.desc{color:var(--muted);font-size:12.5px;margin:0 0 12px;}
@@ -394,8 +401,10 @@ function esc(v) {
 }
 // मालक (master admin) चं नाव सगळीकडे 👑 सह दाखवा
 const MASTER_NAME = "Sagar Shinde";
+const ORGANIZER_NAME = "Tanmay Meher";   // आयोजक — नावावरून टॅग (V1 पुरतं; रोल-सिस्टम V2 ला)
 function crown(name) {
-  return esc(name) + (((name || "").trim() === MASTER_NAME) ? " 👑" : "");
+  const n = (name || "").trim();
+  return esc(name) + (n === MASTER_NAME ? " 👑" : "") + (n === ORGANIZER_NAME ? " 🧑‍💼" : "");
 }
 
 /* ---------------- UI helpers ---------------- */
@@ -637,7 +646,7 @@ const UI_STRINGS = {
       overdueHeadingCount: (n) => `⚠️ थकीत हप्ते — सर्व फंड एकत्र (${n})`,
       overdueDue: (date, days) => `देय ${date} पासून ${days} दिवस थकीत`,
       writeMessage: "मेसेज लिहा", broadcastConfirm: "सर्व मेंबरना हा मेसेज पाठवायचा?",
-      targetHeading: "🎯 निवडक सदस्यांना मेसेज", targetDesc: "एक, काही किंवा सर्व सदस्य निवडा आणि Telegram मेसेज पाठवा.",
+      targetHeading: "📢 सदस्यांना मेसेज", targetDesc: "एक, काही किंवा सर्व सदस्य निवडा (सर्व निवडा = सर्वांना) आणि Telegram मेसेज पाठवा.",
       selectAll: "सर्व निवडा", sendSelected: "निवडलेल्यांना पाठवा",
       noneSelected: "किमान एक सदस्य निवडा", targetSent: (n) => `${n} जणांना मेसेज गेला`, noTgTag: "(Telegram नाही)",
       broadcastSent: (n) => `${n} जणांना मेसेज गेला`,
@@ -830,7 +839,7 @@ const UI_STRINGS = {
       overdueHeadingCount: (n) => `⚠️ बाकी किश्तें — सभी फंड मिलाकर (${n})`,
       overdueDue: (date, days) => `देय ${date} से ${days} दिन बाकी`,
       writeMessage: "मेसेज लिखें", broadcastConfirm: "सभी मेंबर को यह मेसेज भेजना है?",
-      targetHeading: "🎯 चुनिंदा सदस्यों को मेसेज", targetDesc: "एक, कुछ या सभी सदस्य चुनें और Telegram मेसेज भेजें.",
+      targetHeading: "📢 सदस्यों को मेसेज", targetDesc: "एक, कुछ या सभी सदस्य चुनें (सभी चुनें = सबको) और Telegram मेसेज भेजें.",
       selectAll: "सभी चुनें", sendSelected: "चुने हुए को भेजें",
       noneSelected: "कम से कम एक सदस्य चुनें", targetSent: (n) => `${n} लोगों को मेसेज गया`, noTgTag: "(Telegram नहीं)",
       broadcastSent: (n) => `${n} लोगों को मेसेज गया`,
@@ -1023,7 +1032,7 @@ const UI_STRINGS = {
       overdueHeadingCount: (n) => `⚠️ Overdue installments — all funds combined (${n})`,
       overdueDue: (date, days) => `Due since ${date} — ${days} days overdue`,
       writeMessage: "Write a message", broadcastConfirm: "Send this message to all members?",
-      targetHeading: "🎯 Message selected members", targetDesc: "Pick one, some, or all members and send a Telegram message.",
+      targetHeading: "📢 Message members", targetDesc: "Pick one, some, or all members (Select all = everyone) and send a Telegram message.",
       selectAll: "Select all", sendSelected: "Send to selected",
       noneSelected: "Select at least one member", targetSent: (n) => `Message sent to ${n}`, noTgTag: "(no Telegram)",
       broadcastSent: (n) => `Message sent to ${n} people`,
@@ -1742,16 +1751,9 @@ async function renderAdminTab() {
         <h2>${T('adminTab.overdueHeading')}</h2>
         <p class="desc">${T('common.loading')}</p>
       </div>
-      <div class="card">
-        <h2>${T('adminTab.broadcastHeading')}</h2>
-        <p class="desc">${T('adminTab.broadcastDesc')}</p>
-        <textarea id="bcText" rows="5" placeholder="${T('adminTab.broadcastPlaceholder')}"></textarea>
-        <p class="desc" style="margin-top:4px;font-size:12px;">✏️ <b>*ठळक*</b> · <i>_तिरकं_</i> · <s>~खोडलेलं~</s> · <code>\`कोड\`</code></p>
-        <button class="btn" id="bcBtn">${T('adminTab.sendBtn')}</button>
-        <div id="bcResult" style="margin-top:8px;"></div>
-      </div>
-      <div class="card">
-        <h2>${T('adminTab.targetHeading')}</h2>
+      <details class="card acc">
+        <summary>${T('adminTab.targetHeading')}</summary>
+        <div class="acc-body">
         <p class="desc">${T('adminTab.targetDesc')}</p>
         <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:6px;cursor:pointer;">
           <input type="checkbox" id="smAll" style="width:17px;height:17px;"> ${T('adminTab.selectAll')}
@@ -1766,14 +1768,18 @@ async function renderAdminTab() {
         <p class="desc" style="margin-top:4px;font-size:12px;">✏️ <b>*ठळक*</b> · <i>_तिरकं_</i> · <s>~खोडलेलं~</s> · <code>\`कोड\`</code></p>
         <button class="btn" id="smBtn">${T('adminTab.sendSelected')}</button>
         <div id="smResult" style="margin-top:8px;"></div>
-      </div>
-      <div class="card">
-        <h2>${T('adminTab.exportHeading')}</h2>
+        </div>
+      </details>
+      <details class="card acc">
+        <summary>${T('adminTab.exportHeading')}</summary>
+        <div class="acc-body">
         <p class="desc">${T('adminTab.exportDesc')}</p>
         <button class="btn secondary" id="exportBtn">${T('adminTab.exportBtn')}</button>
-      </div>
-      <div class="card">
-        <h2>${T('adminTab.addMemberHeading')}</h2>
+        </div>
+      </details>
+      <details class="card acc">
+        <summary>${T('adminTab.addMemberHeading')}</summary>
+        <div class="acc-body">
         <p class="desc">${T('adminTab.addMemberDesc')}</p>
         <label>${T('adminTab.fullNameLabel')}</label>
         <input type="text" id="mmName" placeholder="${T('adminTab.memberNamePlaceholder')}">
@@ -1792,7 +1798,8 @@ async function renderAdminTab() {
           <option value="en" selected>English</option>
         </select>
         <button class="btn" id="mmBtn">${T('adminTab.addMemberBtn')}</button>
-      </div>`;
+        </div>
+      </details>`;
 
     html += `<h3 class="section-h">${T('adminTab.pendingHeading')(pending.length)}</h3><div class="card">`;
     html += pending.length ? pending.map(p => `
@@ -1805,7 +1812,7 @@ async function renderAdminTab() {
       </div>`).join('') : emptyState("✅", T('adminTab.noPending'), T('adminTab.noPendingSub'));
     html += `</div>`;
 
-    html += `<h3 class="section-h">${T('adminTab.approvedHeading')(approved.length)}</h3><div class="card">`;
+    html += `<details class="card acc"><summary>${T('adminTab.approvedHeading')(approved.length)}</summary><div class="acc-body">`;
     html += approved.map(p => `
       <div class="list-item">
         <div><div class="who">${crown(p.name)}${(p.role==='admin' && !p.is_master)?' 👑':''}</div></div>
@@ -1814,7 +1821,7 @@ async function renderAdminTab() {
           ${(p.id===session.id || p.is_master) ? '' : `<button class="small-btn maroon" data-del="${p.id}">${T('common.del')}</button>`}
         </div>
       </div>`).join('');
-    html += `</div>`;
+    html += `</div></details>`;
 
     main.innerHTML = html;
     main.querySelectorAll("[data-approve]").forEach(el => el.onclick = async () => {
@@ -1896,26 +1903,6 @@ async function renderAdminTab() {
         });
       } catch (e) {}
     })();
-
-    const bcBtn = document.getElementById("bcBtn");
-    if (bcBtn) bcBtn.onclick = async () => {
-      const text = document.getElementById("bcText").value.trim();
-      if (!text) return toast(T('adminTab.writeMessage'));
-      if (!confirm(T('adminTab.broadcastConfirm'))) return;
-      bcBtn.disabled = true; bcBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
-      const bcResult = document.getElementById("bcResult");
-      bcResult.innerHTML = "";
-      try {
-        const { sent, failed } = await api("broadcast", { profile_id: session.id, text });
-        toast(T('adminTab.broadcastSent')(sent));
-        document.getElementById("bcText").value = "";
-        if (failed && failed.length) {
-          bcResult.innerHTML = `<div class="error-box">${T('adminTab.broadcastFailedHeading')(failed.length)}<br>${failed.map(f => esc(f)).join('<br>')}</div>`;
-        }
-      }
-      catch (e) { toast(e.message); }
-      bcBtn.disabled = false; bcBtn.textContent = T('adminTab.sendBtn');
-    };
 
     const smAll = document.getElementById("smAll");
     if (smAll) smAll.onchange = () => {
@@ -2250,7 +2237,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 10;
+const APP_VERSION = 11;
 let _updateShown = false, _updateChecking = false;
 async function checkForUpdate() {
   if (_updateShown || _updateChecking) return;

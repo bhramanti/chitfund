@@ -1778,7 +1778,18 @@ async function renderAdminTab() {
         <p class="desc">${T('adminTab.exportDesc')}</p>
         <button class="btn secondary" id="exportBtn">${T('adminTab.exportBtn')}</button>
         </div>
-      </details>
+      </details>` + ((session.name || "").trim() === MASTER_NAME ? `
+      <details class="card acc">
+        <summary>🧪 QR टेस्ट (फक्त तुम्हाला)</summary>
+        <div class="acc-body">
+        <p class="desc">विजेत्याच्या UPI चा QR Telegram वर नीट जातो का ते तपासा. हा मेसेज <b>फक्त तुमच्याच</b> Telegram वर जातो — कोणत्याही सदस्याला काहीही जात नाही.</p>
+        <label>UPI ID (रिकामं ठेवल्यास तुमचाच वापरेल)</label>
+        <input type="text" id="qrTestUpi" placeholder="9664548089-5@ybl">
+        <label>रक्कम (₹)</label>
+        <input type="number" id="qrTestAmt" value="1" min="1">
+        <button class="btn secondary" id="qrTestBtn">🧪 टेस्ट QR पाठवा</button>
+        </div>
+      </details>` : ``) + `
       <details class="card acc">
         <summary>${T('adminTab.addMemberHeading')}</summary>
         <div class="acc-body">
@@ -1937,6 +1948,19 @@ async function renderAdminTab() {
       try { const { data } = await api("exportData", { profile_id: session.id }); downloadCsvZip(data); toast(T('adminTab.exportDone')); }
       catch (e) { toast(e.message); }
       exportBtn.disabled = false; exportBtn.textContent = T('adminTab.exportBtn');
+    };
+
+    const qrTestBtn = document.getElementById("qrTestBtn");
+    if (qrTestBtn) qrTestBtn.onclick = async () => {
+      qrTestBtn.disabled = true; qrTestBtn.innerHTML = '<span class="spinner"></span>' + T('common.sending');
+      try {
+        const upi = (document.getElementById("qrTestUpi").value || "").trim();
+        const amount = Number(document.getElementById("qrTestAmt").value) || 1;
+        await api("testQrPhoto", { profile_id: session.id, upi, amount });
+        toast("✅ पाठवलं — Telegram बघा");
+      }
+      catch (e) { toast(e.message); }
+      qrTestBtn.disabled = false; qrTestBtn.textContent = "🧪 टेस्ट QR पाठवा";
     };
   } catch (e) { main.innerHTML = `<div class="error-box">${e.message}</div>`; }
 }
@@ -2239,7 +2263,7 @@ function renderGuide(backTo) {
 
 /* ---------------- auto-update (नवीन आवृत्ती आपोआप तपासते; ?v= ची गरज नाही) ----------------
    प्रत्येक deploy ला: खालचा APP_VERSION आकडा +1 करा आणि version.json मधला "v" ही तेवढाच करा. */
-const APP_VERSION = 12;
+const APP_VERSION = 13;
 let _updateShown = false, _updateChecking = false;
 async function checkForUpdate() {
   if (_updateShown || _updateChecking) return;
